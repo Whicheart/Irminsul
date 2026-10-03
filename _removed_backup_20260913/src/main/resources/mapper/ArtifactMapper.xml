@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.genshin.lunar.mapper.ArtifactMapper">
+
+    <!-- 万能查询 -->
+    <select id="searchArtifact" resultType="com.genshin.lunar.entity.Artifact">
+        SELECT * FROM artifact_basic
+        <where>
+            <if test="setName != null and setName != ''">
+                AND setName LIKE CONCAT('%', #{setName}, '%')
+            </if>
+        </where>
+        ORDER BY setId DESC
+    </select>
+
+</mapper>

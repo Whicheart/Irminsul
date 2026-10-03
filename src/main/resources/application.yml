@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: lunar
+  mongodb:
+    uri: mongodb://localhost:27017/GI
+  jackson:
+    serialization:
+      indent-output: true
+
+server:
+  port: 8080
