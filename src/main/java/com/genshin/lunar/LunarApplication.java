@@ -9,5 +9,4 @@ public class LunarApplication {
     public static void main(String[] args) {
         SpringApplication.run(LunarApplication.class, args);
     }
-
 }

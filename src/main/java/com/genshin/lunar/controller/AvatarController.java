@@ -1,12 +1,11 @@
 package com.genshin.lunar.controller;
 
 import com.genshin.lunar.common.Result;
-import com.genshin.lunar.entity.AvatarQuery;
+import com.genshin.lunar.dto.AvatarQuery;
 import com.genshin.lunar.service.AvatarService;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/avatar")

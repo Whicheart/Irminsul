@@ -1,16 +1,15 @@
 package com.genshin.lunar.service.impl;
 
-import com.genshin.lunar.entity.AvatarQuery;
+import com.genshin.lunar.dto.AvatarQuery;
 import com.genshin.lunar.service.AvatarService;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
 
 @Service
 public class AvatarServiceImpl implements AvatarService {
@@ -21,7 +20,7 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     @Override
-    public List<Map<String, Object>> searchAvatar(AvatarQuery query){
+    public List<Map<String, Object>> searchAvatar(AvatarQuery query) {
         Criteria criteria = new Criteria();
 
         // 隐藏 beta 条目
@@ -32,10 +31,8 @@ public class AvatarServiceImpl implements AvatarService {
         }
 
         Query mongoQuery = new Query(criteria);
-        mongoQuery.with(org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Direction.DESC,
-                "_id"
-        ));
+        mongoQuery.with(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "_id"));
 
         List<org.bson.Document> docs = mongoTemplate.find(mongoQuery, org.bson.Document.class, "avatar");
         List<Map<String, Object>> result = new ArrayList<>();
@@ -70,13 +67,11 @@ public class AvatarServiceImpl implements AvatarService {
         }
 
         Query mongoQuery = new Query(criteria);
-        mongoQuery.with(org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Direction.DESC,
-                "_id"
-        ));
+        mongoQuery.with(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "_id"));
 
         // 只查询需要的字段：_id, name, star, elem, weapon
-        mongoQuery.fields().include( "name", "star", "elem", "weapon");
+        mongoQuery.fields().include("name", "star", "elem", "weapon");
 
         List<org.bson.Document> docs = mongoTemplate.find(mongoQuery, org.bson.Document.class, "avatar");
         List<Map<String, Object>> result = new ArrayList<>();
@@ -90,5 +85,3 @@ public class AvatarServiceImpl implements AvatarService {
         return result;
     }
 }
-
-

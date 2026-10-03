@@ -1,8 +1,7 @@
-package com.genshin.lunar.entity;
-
-import lombok.Data;
+package com.genshin.lunar.dto;
 
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class WeaponQuery {

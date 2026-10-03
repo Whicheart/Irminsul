@@ -10,4 +10,3 @@ public class Avatar {
     @Id
     private Integer id;
 }
-

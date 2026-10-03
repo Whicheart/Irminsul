@@ -1,16 +1,15 @@
 package com.genshin.lunar.service.impl;
 
-import com.genshin.lunar.entity.WeaponQuery;
+import com.genshin.lunar.dto.WeaponQuery;
 import com.genshin.lunar.service.WeaponService;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
 
 @Service
 public class WeaponServiceImpl implements WeaponService {
@@ -19,8 +18,7 @@ public class WeaponServiceImpl implements WeaponService {
             "claymore", "12",
             "polearm", "13",
             "bow", "14",
-            "catalyst", "15"
-    );
+            "catalyst", "15");
 
     private final MongoTemplate mongoTemplate;
 
@@ -40,10 +38,8 @@ public class WeaponServiceImpl implements WeaponService {
         }
 
         Query mongoQuery = new Query(criteria);
-        mongoQuery.with(org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Direction.DESC,
-                "_id"
-        ));
+        mongoQuery.with(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "_id"));
 
         List<org.bson.Document> docs = mongoTemplate.find(mongoQuery, org.bson.Document.class, "weapon");
         List<Map<String, Object>> result = new ArrayList<>();
@@ -76,8 +72,8 @@ public class WeaponServiceImpl implements WeaponService {
             for (String typeName : query.getType()) {
                 String prefix = TYPE_PREFIX_MAP.get(typeName);
                 if (prefix != null) {
-                    int min = Integer.parseInt(prefix + "000");  // 11000
-                    int max = min + 1000;                         // 12000
+                    int min = Integer.parseInt(prefix + "000"); // 11000
+                    int max = min + 1000; // 12000
                     orList.add(Criteria.where("_id").gte(min).lt(max));
                 }
             }
@@ -88,10 +84,8 @@ public class WeaponServiceImpl implements WeaponService {
         }
 
         Query mongoQuery = new Query(criteria);
-        mongoQuery.with(org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Direction.DESC,
-                "_id"
-        ));
+        mongoQuery.with(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "_id"));
 
         List<org.bson.Document> docs = mongoTemplate.find(mongoQuery, org.bson.Document.class, "weapon");
         List<Map<String, Object>> result = new ArrayList<>();
