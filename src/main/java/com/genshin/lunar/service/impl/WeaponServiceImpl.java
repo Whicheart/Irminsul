@@ -17,8 +17,8 @@ public class WeaponServiceImpl implements WeaponService {
             "sword", "11",
             "claymore", "12",
             "polearm", "13",
-            "bow", "14",
-            "catalyst", "15");
+            "catalyst", "14",
+            "bow", "15");
 
     private final MongoTemplate mongoTemplate;
 
