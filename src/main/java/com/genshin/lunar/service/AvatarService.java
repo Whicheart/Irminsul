@@ -1,11 +1,14 @@
 package com.genshin.lunar.service;
 
-import com.genshin.lunar.dto.AvatarList;
+import com.genshin.lunar.dto.*;
 import java.util.List;
 import java.util.Map;
 
 public interface AvatarService {
-    List<Map<String, Object>> searchAvatar(AvatarList query);
+    List<AvatarList.AvatarBrief> getAvatarList();
 
-    List<Map<String, Object>> searchAvatarSimple(AvatarList query);
+//    AvatarBaseInfoDTO getAvatarBaseInfo(Integer id);
+//    AvatarOutfitDTO getAvatarOutfits(Integer id);
+//    AvatarStoryDTO getAvatarStories(Integer id);
+//    AvatarVoiceDTO getAvatarVoices(Integer id);
 }
