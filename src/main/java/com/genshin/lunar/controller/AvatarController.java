@@ -1,7 +1,7 @@
 package com.genshin.lunar.controller;
 
 import com.genshin.lunar.common.Result;
-import com.genshin.lunar.dto.AvatarQuery;
+import com.genshin.lunar.dto.AvatarList;
 import com.genshin.lunar.service.AvatarService;
 import java.util.List;
 import java.util.Map;
@@ -17,12 +17,12 @@ public class AvatarController {
     }
 
     @GetMapping("/search")
-    public Result<List<Map<String, Object>>> searchAvatar(AvatarQuery query) {
+    public Result<List<Map<String, Object>>> searchAvatar(AvatarList query) {
         return Result.ok(avatarService.searchAvatar(query));
     }
 
     @GetMapping("/simple_search")
-    public Result<List<Map<String, Object>>> searchSimple(AvatarQuery query) {
+    public Result<List<Map<String, Object>>> searchSimple(AvatarList query) {
         return Result.ok(avatarService.searchAvatarSimple(query));
     }
 }
