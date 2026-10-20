@@ -8,7 +8,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/avatar")
+@RequestMapping("/api/avatar")
 public class AvatarController {
     private final AvatarService avatarService;
 
@@ -16,13 +16,18 @@ public class AvatarController {
         this.avatarService = avatarService;
     }
 
-    @GetMapping("/search")
-    public Result<List<Map<String, Object>>> searchAvatar(AvatarList query) {
-        return Result.ok(avatarService.searchAvatar(query));
+    @GetMapping("/list")
+    public Result<List<AvatarList.AvatarBrief>> getList() {
+        return Result.ok(avatarService.getAvatarList());
     }
 
-    @GetMapping("/simple_search")
-    public Result<List<Map<String, Object>>> searchSimple(AvatarList query) {
-        return Result.ok(avatarService.searchAvatarSimple(query));
-    }
+//    @GetMapping("/search")
+//    public Result<List<Map<String, Object>>> searchAvatar(AvatarList query) {
+//        return Result.ok(avatarService.searchAvatar(query));
+//    }
+//
+//    @GetMapping("/simple_search")
+//    public Result<List<Map<String, Object>>> searchSimple(AvatarList query) {
+//        return Result.ok(avatarService.searchAvatarSimple(query));
+//    }
 }
