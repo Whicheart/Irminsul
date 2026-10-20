@@ -1,6 +1,6 @@
 package com.genshin.lunar.service.impl;
 
-import com.genshin.lunar.dto.AvatarQuery;
+import com.genshin.lunar.dto.AvatarList;
 import com.genshin.lunar.service.AvatarService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +20,7 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     @Override
-    public List<Map<String, Object>> searchAvatar(AvatarQuery query) {
+    public List<Map<String, Object>> searchAvatar(AvatarList query) {
         Criteria criteria = new Criteria();
 
         // 隐藏 beta 条目
@@ -47,7 +47,7 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     @Override
-    public List<Map<String, Object>> searchAvatarSimple(AvatarQuery query) {
+    public List<Map<String, Object>> searchAvatarSimple(AvatarList query) {
         Criteria criteria = new Criteria();
 
         // 隐藏 beta 条目
