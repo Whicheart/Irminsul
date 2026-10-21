@@ -1,5 +1,6 @@
 package com.genshin.lunar.service.impl;
 
+import com.genshin.lunar.dto.AvatarBaseInfoDTO;
 import com.genshin.lunar.dto.AvatarList;
 import com.genshin.lunar.entity.Avatar;
 import com.genshin.lunar.entity.AvatarCodex;
@@ -84,6 +85,45 @@ public class AvatarServiceImpl implements AvatarService {
         });
 
         return result;
+    }
+
+    @Override
+    public AvatarBaseInfoDTO getAvatarBaseInfo(Integer id) {
+        Avatar avatar = avatarRepository.findById(id).orElse(null);
+        if (avatar == null) return null;
+
+        FetterInfo fetterInfo = fetterInfoRepository.findById(id).orElse(new FetterInfo());
+        AvatarCodex avatarCodex = avatarCodexRepository.findById(id).orElse(new AvatarCodex());
+
+        AvatarBaseInfoDTO avatarBaseInfoDTO = new AvatarBaseInfoDTO();
+        avatarBaseInfoDTO.setId(avatar.getId());
+
+        avatarBaseInfoDTO.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
+        avatarBaseInfoDTO.setDesc(textMapChsUtil.getText(avatar.getDescTextMapHash()));
+        avatarBaseInfoDTO.setTitle(textMapChsUtil.getText(fetterInfo.getAvatarTitleTextMapHash()));
+        avatarBaseInfoDTO.setAffiliation(textMapChsUtil.getText(fetterInfo.getAvatarNativeTextMapHash()));
+
+        avatarBaseInfoDTO.setQualityType(translateQuality(avatar.getQualityType()));
+        avatarBaseInfoDTO.setWeaponType(translateWeapon(avatar.getWeaponType()));
+        avatarBaseInfoDTO.setReleaseTime(avatarCodex.getBeginTime());
+
+        AvatarBaseInfoDTO.Birth birth = new AvatarBaseInfoDTO.Birth();
+        birth.setMonth(fetterInfo.getInfoBirthMonth());
+        birth.setDay(fetterInfo.getInfoBirthDay());
+        avatarBaseInfoDTO.setBirth(birth);
+
+        AvatarBaseInfoDTO.Cv cv = new AvatarBaseInfoDTO.Cv();
+        cv.setCn(textMapChsUtil.getText(fetterInfo.getCvChineseTextMapHash()));
+        cv.setEn(textMapChsUtil.getText(fetterInfo.getCvEnglishTextMapHash()));
+        cv.setJp(textMapChsUtil.getText(fetterInfo.getCvJapaneseTextMapHash()));
+        cv.setKr(textMapChsUtil.getText(fetterInfo.getCvKoreanTextMapHash()));
+        avatarBaseInfoDTO.setCv(cv);
+
+        avatarBaseInfoDTO.setHp(java.util.List.of(avatar.getHpBase()));
+        avatarBaseInfoDTO.setAtk(java.util.List.of(avatar.getAttackBase()));
+        avatarBaseInfoDTO.setDef(java.util.List.of(avatar.getDefenseBase()));
+
+        return avatarBaseInfoDTO;
     }
 
     private String translateQuality(String quality) {
