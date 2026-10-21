@@ -6,8 +6,7 @@ import java.util.Map;
 
 public interface AvatarService {
     List<AvatarList.AvatarBrief> getAvatarList();
-
-//    AvatarBaseInfoDTO getAvatarBaseInfo(Integer id);
+    AvatarBaseInfoDTO getAvatarBaseInfo(Integer id);
 //    AvatarOutfitDTO getAvatarOutfits(Integer id);
 //    AvatarStoryDTO getAvatarStories(Integer id);
 //    AvatarVoiceDTO getAvatarVoices(Integer id);
