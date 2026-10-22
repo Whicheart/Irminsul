@@ -2,18 +2,15 @@ package com.genshin.lunar.service.impl;
 
 import com.genshin.lunar.dto.AvatarBaseInfoDTO;
 import com.genshin.lunar.dto.AvatarList;
-import com.genshin.lunar.entity.Avatar;
-import com.genshin.lunar.entity.AvatarCodex;
-import com.genshin.lunar.entity.FetterInfo;
-import com.genshin.lunar.repository.AvatarCodexRepository;
-import com.genshin.lunar.repository.AvatarRepository;
-import com.genshin.lunar.repository.FetterInfoRepository;
+import com.genshin.lunar.entity.*;
+import com.genshin.lunar.repository.*;
 import com.genshin.lunar.service.AvatarService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.genshin.lunar.util.TextMapChsUtil;
 import org.springframework.stereotype.Service;
@@ -24,15 +21,19 @@ public class AvatarServiceImpl implements AvatarService {
     private final AvatarCodexRepository avatarCodexRepository;
     private final FetterInfoRepository fetterInfoRepository;
     private final TextMapChsUtil textMapChsUtil;
+    private final AvatarCurveRepository avatarCurveRepository;
+    private final AvatarPromoteRepository avatarPromoteRepository;
 
     public AvatarServiceImpl(AvatarRepository avatarRepository,
                              AvatarCodexRepository avatarCodexRepository,
                              FetterInfoRepository fetterInfoRepository,
-                             TextMapChsUtil textMapChsUtil) {
+                             TextMapChsUtil textMapChsUtil, AvatarCurveRepository avatarCurveRepository, AvatarPromoteRepository avatarPromoteRepository) {
         this.avatarRepository = avatarRepository;
         this.avatarCodexRepository = avatarCodexRepository;
         this.fetterInfoRepository = fetterInfoRepository;
         this.textMapChsUtil = textMapChsUtil;
+        this.avatarCurveRepository = avatarCurveRepository;
+        this.avatarPromoteRepository = avatarPromoteRepository;
     }
 
     @Override
@@ -89,28 +90,65 @@ public class AvatarServiceImpl implements AvatarService {
 
     @Override
     public AvatarBaseInfoDTO getAvatarBaseInfo(Integer id) {
+        // ==========================================
+        // 前期准备：查主表、关联表
+        // ==========================================
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) return null;
-
-        FetterInfo fetterInfo = fetterInfoRepository.findById(id).orElse(new FetterInfo());
-        AvatarCodex avatarCodex = avatarCodexRepository.findById(id).orElse(new AvatarCodex());
+        Integer avatarPromoteId = avatar.getAvatarPromoteId();
 
         AvatarBaseInfoDTO avatarBaseInfoDTO = new AvatarBaseInfoDTO();
+        AvatarCodex avatarCodex = avatarCodexRepository.findById(id).orElse(new AvatarCodex());
+        AvatarPromote avatarPromote = avatarPromoteRepository.findById(avatarPromoteId).orElse(new AvatarPromote());
+        FetterInfo fetterInfo = fetterInfoRepository.findById(id).orElse(new FetterInfo());
+        List<AvatarCurve> avatarCurveList = avatarCurveRepository.findAll();
+
+        Map<Integer, AvatarCurve> curveMap = avatarCurveList.stream()
+            .collect(Collectors.toMap(AvatarCurve::getLevel, c -> c));
+
+        String defaultPower = "神之眼";
+
+        // ==========================================
+        // 基础文本字段组装（使用 textMapChsUtil 翻译 Hash）
+        // ==========================================
         avatarBaseInfoDTO.setId(avatar.getId());
-
         avatarBaseInfoDTO.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
-        avatarBaseInfoDTO.setDesc(textMapChsUtil.getText(avatar.getDescTextMapHash()));
         avatarBaseInfoDTO.setTitle(textMapChsUtil.getText(fetterInfo.getAvatarTitleTextMapHash()));
-        avatarBaseInfoDTO.setAffiliation(textMapChsUtil.getText(fetterInfo.getAvatarNativeTextMapHash()));
-
+        avatarBaseInfoDTO.setDesc(textMapChsUtil.getText(avatar.getDescTextMapHash()));
         avatarBaseInfoDTO.setQualityType(translateQuality(avatar.getQualityType()));
         avatarBaseInfoDTO.setWeaponType(translateWeapon(avatar.getWeaponType()));
         avatarBaseInfoDTO.setReleaseTime(avatarCodex.getBeginTime());
+
+        // ==========================================
+        // 嵌套对象组装（阵营、生日、命座、力量、元素、CV）
+        // ==========================================
+        List<String> affiliation = new ArrayList<>();
+        String aff1 = textMapChsUtil.getText(fetterInfo.getAvatarNativeTextMapHash());
+        String aff2 = textMapChsUtil.getText(fetterInfo.getAvatarNative2TextMapHash());
+        if (aff1 != null && !aff1.isEmpty()) affiliation.add(aff1);
+        if (aff2 != null && !aff2.isEmpty()) affiliation.add(aff2);
+        avatarBaseInfoDTO.setAffiliation(affiliation);
 
         AvatarBaseInfoDTO.Birth birth = new AvatarBaseInfoDTO.Birth();
         birth.setMonth(fetterInfo.getInfoBirthMonth());
         birth.setDay(fetterInfo.getInfoBirthDay());
         avatarBaseInfoDTO.setBirth(birth);
+
+        AvatarBaseInfoDTO.Constellation constellation = new AvatarBaseInfoDTO.Constellation();
+        constellation.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarConstellationBeforTextMapHash()));
+        constellation.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarConstellationAfterTextMapHash()));
+        avatarBaseInfoDTO.setConstellation(constellation);
+
+        AvatarBaseInfoDTO.Power power = new AvatarBaseInfoDTO.Power();
+        power.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarPowerBeforTextMapHash()));
+        power.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarPowerAfterTextMapHash()));
+        if(power.getBefor() == null) power.setBefor(defaultPower);
+        avatarBaseInfoDTO.setPower(power);
+
+        AvatarBaseInfoDTO.Element element = new AvatarBaseInfoDTO.Element();
+        element.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarVisionBeforTextMapHash()));
+        element.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarVisionAfterTextMapHash()));
+        avatarBaseInfoDTO.setElement(element);
 
         AvatarBaseInfoDTO.Cv cv = new AvatarBaseInfoDTO.Cv();
         cv.setCn(textMapChsUtil.getText(fetterInfo.getCvChineseTextMapHash()));
@@ -119,10 +157,101 @@ public class AvatarServiceImpl implements AvatarService {
         cv.setKr(textMapChsUtil.getText(fetterInfo.getCvKoreanTextMapHash()));
         avatarBaseInfoDTO.setCv(cv);
 
-        avatarBaseInfoDTO.setHp(java.util.List.of(avatar.getHpBase()));
-        avatarBaseInfoDTO.setAtk(java.util.List.of(avatar.getAttackBase()));
-        avatarBaseInfoDTO.setDef(java.util.List.of(avatar.getDefenseBase()));
+        // ==========================================
+        // 基础三维、元素精通与突破加成计算
+        // ==========================================
+        List<AvatarPromote.PromoteLevel> promoteLevels = avatarPromote.getLevels();
+        List<Avatar.PropGrowCurve> propGrowCurves = avatar.getPropGrowCurves();
+        List<Double> hpList = new ArrayList<>();
+        List<Double> atkList = new ArrayList<>();
+        List<Double> defList = new ArrayList<>();
+        List<Double> propList = new ArrayList<>();
 
+        String hpCurveType = null;
+        String atkCurveType = null;
+        String defCurveType = null;
+        if (propGrowCurves != null) {
+            for (Avatar.PropGrowCurve curve : propGrowCurves) {
+                if ("FIGHT_PROP_BASE_HP".equals(curve.getType())) hpCurveType = curve.getGrowCurve();
+                if ("FIGHT_PROP_BASE_ATTACK".equals(curve.getType())) atkCurveType = curve.getGrowCurve();
+                if ("FIGHT_PROP_BASE_DEFENSE".equals(curve.getType())) defCurveType = curve.getGrowCurve();
+            }
+        }
+
+        Map<Integer, Double> hpBonusMap = new HashMap<>();
+        Map<Integer, Double> atkBonusMap = new HashMap<>();
+        Map<Integer, Double> defBonusMap = new HashMap<>();
+        Map<Integer, Double> propBonusMap = new HashMap<>();
+        String ascStatName = null;
+
+        for (int i = 0; i <= 6; i++) {
+            hpBonusMap.put(i, 0.0);
+            atkBonusMap.put(i, 0.0);
+            defBonusMap.put(i, 0.0);
+            propBonusMap.put(i, 0.0);
+        }
+
+        if (promoteLevels != null) {
+            for (AvatarPromote.PromoteLevel lvl : promoteLevels) {
+                int pLevel = lvl.getPromoteLevel();
+                if (lvl.getAddProps() != null) {
+                    for (AvatarPromote.AddProp prop : lvl.getAddProps()) {
+                        Double val = prop.getValue() != null ? prop.getValue() : 0.0;
+                        if ("FIGHT_PROP_BASE_HP".equals(prop.getPropType())) {
+                            hpBonusMap.put(pLevel, val);
+                        } else if ("FIGHT_PROP_BASE_ATTACK".equals(prop.getPropType())) {
+                            atkBonusMap.put(pLevel, val);
+                        } else if ("FIGHT_PROP_BASE_DEFENSE".equals(prop.getPropType())) {
+                            defBonusMap.put(pLevel, val);
+                        } else if (prop.getPropType() != null && !prop.getPropType().isEmpty()) {
+                            ascStatName = prop.getPropType();
+                            propBonusMap.put(pLevel, val);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int level = 1; level <= curveMap.size(); level++) {
+            AvatarCurve curve = curveMap.get(level);
+            if (curve != null && curve.getCurves() != null) {
+                Double hpMulti = curve.getCurves().get(hpCurveType);
+                Double atkMulti = curve.getCurves().get(atkCurveType);
+                Double defMulti = curve.getCurves().get(defCurveType);
+
+                int currentPromoteLevel = 0;
+                if (level > 80) currentPromoteLevel = 6;
+                else if (level > 70) currentPromoteLevel = 5;
+                else if (level > 60) currentPromoteLevel = 4;
+                else if (level > 50) currentPromoteLevel = 3;
+                else if (level > 40) currentPromoteLevel = 2;
+                else if (level > 20) currentPromoteLevel = 1;
+
+                Double hpBonus = hpBonusMap.get(currentPromoteLevel);
+                Double atkBonus = atkBonusMap.get(currentPromoteLevel);
+                Double defBonus = defBonusMap.get(currentPromoteLevel);
+                Double propBonus = propBonusMap.get(currentPromoteLevel);
+
+                hpList.add(hpMulti != null ? avatar.getHpBase() * hpMulti + hpBonus : 0.0);
+                atkList.add(atkMulti != null ? avatar.getAttackBase() * atkMulti + atkBonus : 0.0);
+                defList.add(defMulti != null ? avatar.getDefenseBase() * defMulti + defBonus : 0.0);
+                propList.add(propBonus);
+            }
+        }
+
+        // ==========================================
+        // 基础三维、元素精通与突破加成组装
+        // ==========================================
+        avatarBaseInfoDTO.setHp(hpList);
+        avatarBaseInfoDTO.setAtk(atkList);
+        avatarBaseInfoDTO.setDef(defList);
+        avatarBaseInfoDTO.setAscensionStatName(translateStat(ascStatName));
+        avatarBaseInfoDTO.setAscensionStatValue(propList);
+        if(avatar.getElementMastery() != null) avatarBaseInfoDTO.setElementMastery(avatar.getElementMastery());
+
+        // ==========================================
+        // 材料表
+        // ==========================================
         return avatarBaseInfoDTO;
     }
 
@@ -130,7 +259,7 @@ public class AvatarServiceImpl implements AvatarService {
         if (quality == null) return "未知";
         return switch (quality) {
             case "QUALITY_ORANGE" -> "五星";
-            case "QUALITY_ORANGE_SP" -> "五星"; // 埃洛伊等特殊五星
+            case "QUALITY_ORANGE_SP" -> "五星";
             case "QUALITY_PURPLE" -> "四星";
             case "QUALITY_BLUE" -> "三星";
             default -> quality;
@@ -145,8 +274,31 @@ public class AvatarServiceImpl implements AvatarService {
             case "WEAPON_POLE" -> "长柄武器";
             case "WEAPON_BOW" -> "弓";
             case "WEAPON_CATALYST" -> "法器";
-            case "WEAPON_CROSSBOW" -> "弩"; // 旅行者特殊形态
+            case "WEAPON_CROSSBOW" -> "枪";
             default -> weapon;
+        };
+    }
+
+    private String translateStat(String stat) {
+        if (stat == null) return "未知";
+        return switch (stat) {
+            case "FIGHT_PROP_HP_PERCENT" -> "生命值";
+            case "FIGHT_PROP_ATTACK_PERCENT" -> "攻击力";
+            case "FIGHT_PROP_DEFENSE_PERCENT" -> "防御力";
+            case "FIGHT_PROP_ELEMENT_MASTERY" -> "元素精通";
+            case "FIGHT_PROP_CHARGE_EFFICIENCY" -> "元素充能效率";
+            case "FIGHT_PROP_CRITICAL" -> "暴击率";
+            case "FIGHT_PROP_CRITICAL_HURT" -> "暴击伤害";
+            case "FIGHT_PROP_HEAL_ADD" -> "治疗加成";
+            case "FIGHT_PROP_FIRE_ADD_HURT" -> "火元素伤害加成";
+            case "FIGHT_PROP_WATER_ADD_HURT" -> "水元素伤害加成";
+            case "FIGHT_PROP_ICE_ADD_HURT" -> "冰元素伤害加成";
+            case "FIGHT_PROP_ELEC_ADD_HURT" -> "雷元素伤害加成";
+            case "FIGHT_PROP_WIND_ADD_HURT" -> "风元素伤害加成";
+            case "FIGHT_PROP_ROCK_ADD_HURT" -> "岩元素伤害加成";
+            case "FIGHT_PROP_GRASS_ADD_HURT" -> "草元素伤害加成";
+            case "FIGHT_PROP_PHYSICAL_ADD_HURT" -> "物理伤害加成";
+            default -> stat;
         };
     }
 
