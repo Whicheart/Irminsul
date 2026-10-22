@@ -10,10 +10,10 @@ public class AvatarBaseInfoDTO {
     private String name;
     private String title;
     private String desc;
-    private String affiliation;
     private String qualityType;
     private String weaponType;
     private String releaseTime;
+    private List<String> affiliation;
 
     private Birth birth;
     private Constellation constellation;
@@ -24,6 +24,7 @@ public class AvatarBaseInfoDTO {
     private List<Double> hp;
     private List<Double> atk;
     private List<Double> def;
+    private Double elementMastery;
     private String ascensionStatName;
     private List<Double> ascensionStatValue;
 
