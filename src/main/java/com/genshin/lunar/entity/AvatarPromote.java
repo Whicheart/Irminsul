@@ -23,6 +23,10 @@ public class AvatarPromote {
         @Field("promoteLevel")
         private Integer promoteLevel;
 
+        // 该阶突破后解锁的等级上限
+        @Field("unlockMaxLevel")
+        private Integer unlockMaxLevel;
+
         // 摩拉消耗、材料消耗与属性加成
         @Field("scoinCost")
         private Integer scoinCost;
