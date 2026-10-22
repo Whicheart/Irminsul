@@ -13,6 +13,7 @@ public class MaterialSourceData {
     @Id
     private Integer id;
 
+    // 获取途径描述与来源标签
     @Field("textList")
     private List<String> textList;
     @Field("sourceList")

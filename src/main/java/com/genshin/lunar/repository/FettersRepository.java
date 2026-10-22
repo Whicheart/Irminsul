@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface FettersRepository extends MongoRepository<Fetters, String> {
+    // 按角色 ID 查语音，先按类型再按编号排序
     List<Fetters> findByAvatarIdOrderByTypeAscFetterIdAsc(Integer avatarId);
 }

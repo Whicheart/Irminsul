@@ -11,11 +11,13 @@ public class AvatarCodex {
     @Id
     private Integer id;
 
+    // 排序权重
     @Field("sortFactor")
     private Integer sortFactor;
     @Field("sortId")
     private Integer sortId;
 
+    // 上线时间（字符串，非日期类型）
     @Field("beginTime")
     private String beginTime;
 

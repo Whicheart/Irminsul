@@ -9,5 +9,6 @@ import java.util.List;
 
 @Repository
 public interface TextMapChsMediumRepository extends MongoRepository<TextMapChsMedium, String> {
+    // 按哈希集合批量取文本
     List<TextMapChsMedium> findByIdIn(Collection<String> ids);
 }

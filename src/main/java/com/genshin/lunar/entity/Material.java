@@ -11,6 +11,7 @@ public class Material {
     @Id
     private Integer id;
 
+    // 名称、描述、类型说明、特殊说明与效果说明的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
     @Field("descTextMapHash")
@@ -22,6 +23,7 @@ public class Material {
     @Field("effectDescTextMapHash")
     private String effectDescTextMapHash;
 
+    // 图标、类型与堆叠上限
     @Field("icon")
     private String icon;
     @Field("itemType")
@@ -37,6 +39,7 @@ public class Material {
     @Field("globalItemLimit")
     private Integer globalItemLimit;
 
+    // 背包筛选、食物品质与套装
     @Field("filterType")
     private String filterType;
     @Field("effectType")
@@ -48,6 +51,7 @@ public class Material {
     @Field("setID")
     private Integer setID;
 
+    // 使用次数、使用目标与冷却
     @Field("maxUseCount")
     private Integer maxUseCount;
     @Field("useTarget")

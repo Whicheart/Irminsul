@@ -11,6 +11,7 @@ public class TextMapChsMedium {
     @Id
     private String id;
 
+    // 哈希对应的中文文本
     @Field("text")
     private String text;
 }

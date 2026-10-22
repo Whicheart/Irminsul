@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface FetterCharacterCardRepository extends MongoRepository<FetterCharacterCard, String> {
+    // 按角色 ID 查名片
     List<FetterCharacterCard> findByAvatarId(Integer avatarId);
 }
