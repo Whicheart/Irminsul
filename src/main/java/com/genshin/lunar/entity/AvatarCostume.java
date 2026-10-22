@@ -28,8 +28,6 @@ public class AvatarCostume {
     private Integer itemId;
     @Field("indexID")
     private Integer indexID;
-    @Field("isDefault")
-    private Boolean isDefault;
 
     // 立绘资源名
     @Field("sideIconName")
