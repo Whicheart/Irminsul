@@ -1,7 +1,6 @@
 package com.genshin.lunar.service.impl;
 
-import com.genshin.lunar.dto.AvatarBaseInfoDTO;
-import com.genshin.lunar.dto.AvatarList;
+import com.genshin.lunar.dto.*;
 import com.genshin.lunar.entity.*;
 import com.genshin.lunar.repository.*;
 import com.genshin.lunar.service.AvatarService;
@@ -21,11 +20,14 @@ import org.springframework.stereotype.Service;
 public class AvatarServiceImpl implements AvatarService {
     private final AvatarRepository avatarRepository;
     private final AvatarCodexRepository avatarCodexRepository;
+    private final FettersRepository fettersRepository;
     private final FetterInfoRepository fetterInfoRepository;
+    private final FetterStoryRepository fetterStoryRepository;
     private final TextMapChsUtil textMapChsUtil;
     private final AvatarCurveRepository avatarCurveRepository;
     private final AvatarPromoteRepository avatarPromoteRepository;
     private final MaterialRepository materialRepository;
+    private final AvatarCostumeRepository avatarCostumeRepository;
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(){
@@ -289,6 +291,111 @@ public class AvatarServiceImpl implements AvatarService {
         avatarBaseInfoDTO.setMaterials(List.of(material));
 
         return avatarBaseInfoDTO;
+    }
+
+    @Override
+    public AvatarOutfitDTO getAvatarOutfits(Integer id){
+        AvatarOutfitDTO avatarOutfitDTO = new AvatarOutfitDTO();
+        List<AvatarOutfitDTO.Outfit> outfits = new ArrayList<>();
+        List<AvatarCostume> avatarCostumes = avatarCostumeRepository.findByCharacterId(id);
+
+        for(AvatarCostume avatarCostume : avatarCostumes){
+            if (avatarCostume == null) continue;
+            AvatarOutfitDTO.Outfit outfit = new AvatarOutfitDTO.Outfit();
+            outfit.setId(avatarCostume.getId());
+            outfit.setName(textMapChsUtil.getText(avatarCostume.getNameTextMapHash()));
+            outfit.setDesc(textMapChsUtil.getText(avatarCostume.getDescTextMapHash()));
+            outfit.setQuality(avatarCostume.getQuality());
+            outfit.setIndexID(avatarCostume.getIndexID());
+            outfits.add(outfit);
+        }
+
+        outfits.sort((a, b) -> {
+            int i1 = a.getIndexID() == null ? -1 : a.getIndexID();
+            int i2 = b.getIndexID() == null ? -1 : b.getIndexID();
+            return Integer.compare(i1, i2);
+        });
+
+        avatarOutfitDTO.setId(id);
+        avatarOutfitDTO.setOutfits(outfits);
+
+        return avatarOutfitDTO;
+    }
+
+    @Override
+    public AvatarStoryDTO getAvatarStories(Integer id) {
+        AvatarStoryDTO avatarStoryDTO = new AvatarStoryDTO();
+        List<AvatarStoryDTO.Story> stories = new ArrayList<>();
+        List<FetterStory> fetterStories = fetterStoryRepository.findByAvatarIdOrderByFetterIdAsc(id);
+
+        if (fetterStories != null) {
+            for (FetterStory fetterStory : fetterStories) {
+                if (fetterStory == null) continue;
+
+                AvatarStoryDTO.Story story = new AvatarStoryDTO.Story();
+                story.setTitle(textMapChsUtil.getText(fetterStory.getStoryTitleTextMapHash()));
+                story.setText(textMapChsUtil.getText(fetterStory.getStoryContextTextMapHash()));
+
+                List<String> tips = new ArrayList<>();
+                if (fetterStory.getTips() != null) {
+                    for (String tipHash : fetterStory.getTips()) {
+                        String tip = textMapChsUtil.getText(tipHash);
+                        if (tip != null) tips.add(tip);
+                    }
+                }
+                story.setTips(tips);
+
+                stories.add(story);
+            }
+        }
+
+        avatarStoryDTO.setId(id);
+        avatarStoryDTO.setStories(stories);
+        return avatarStoryDTO;
+    }
+
+    @Override
+    public AvatarVoiceDTO getAvatarVoices(Integer id) {
+        AvatarVoiceDTO avatarVoiceDTO = new AvatarVoiceDTO();
+        List<AvatarVoiceDTO.Daily> dailies = new ArrayList<>();
+        List<AvatarVoiceDTO.Battle> battles = new ArrayList<>();
+
+        List<Fetters> fettersList = fettersRepository.findByAvatarIdOrderByTypeAscFetterIdAsc(id);
+
+        if (fettersList != null) {
+            for (Fetters fetters : fettersList) {
+                if (fetters == null) continue;
+
+                List<String> tips = new ArrayList<>();
+                if (fetters.getTips() != null) {
+                    for (String tipHash : fetters.getTips()) {
+                        String tip = textMapChsUtil.getText(tipHash);
+                        if (tip != null) tips.add(tip);
+                    }
+                }
+
+                if (fetters.getType() != null && fetters.getType() == 1) {
+                    AvatarVoiceDTO.Daily daily = new AvatarVoiceDTO.Daily();
+                    daily.setTitle(textMapChsUtil.getText(fetters.getVoiceTitleTextMapHash()));
+                    daily.setText(textMapChsUtil.getText(fetters.getVoiceFileTextTextMapHash()));
+                    daily.setTips(tips);
+                    dailies.add(daily);
+
+                } else if (fetters.getType() != null && fetters.getType() == 2) {
+                    AvatarVoiceDTO.Battle battle = new AvatarVoiceDTO.Battle();
+                    battle.setTitle(textMapChsUtil.getText(fetters.getVoiceTitleTextMapHash()));
+                    battle.setText(textMapChsUtil.getText(fetters.getVoiceFileTextTextMapHash()));
+                    battle.setTips(tips);
+                    battles.add(battle);
+                }
+            }
+        }
+
+        avatarVoiceDTO.setId(id);
+        avatarVoiceDTO.setDailies(dailies);
+        avatarVoiceDTO.setBattles(battles);
+
+        return avatarVoiceDTO;
     }
 
     private String translateQuality(String quality) {
