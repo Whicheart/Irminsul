@@ -13,9 +13,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.genshin.lunar.util.TextMapChsUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AvatarServiceImpl implements AvatarService {
     private final AvatarRepository avatarRepository;
     private final AvatarCodexRepository avatarCodexRepository;
@@ -23,18 +25,7 @@ public class AvatarServiceImpl implements AvatarService {
     private final TextMapChsUtil textMapChsUtil;
     private final AvatarCurveRepository avatarCurveRepository;
     private final AvatarPromoteRepository avatarPromoteRepository;
-
-    public AvatarServiceImpl(AvatarRepository avatarRepository,
-                             AvatarCodexRepository avatarCodexRepository,
-                             FetterInfoRepository fetterInfoRepository,
-                             TextMapChsUtil textMapChsUtil, AvatarCurveRepository avatarCurveRepository, AvatarPromoteRepository avatarPromoteRepository) {
-        this.avatarRepository = avatarRepository;
-        this.avatarCodexRepository = avatarCodexRepository;
-        this.fetterInfoRepository = fetterInfoRepository;
-        this.textMapChsUtil = textMapChsUtil;
-        this.avatarCurveRepository = avatarCurveRepository;
-        this.avatarPromoteRepository = avatarPromoteRepository;
-    }
+    private final MaterialRepository materialRepository;
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(){
@@ -252,6 +243,51 @@ public class AvatarServiceImpl implements AvatarService {
         // ==========================================
         // 材料表
         // ==========================================
+        List<Integer> materialIds = new ArrayList<>();
+        if (promoteLevels != null) {
+            for (AvatarPromote.PromoteLevel lvl : promoteLevels) {
+                if (lvl.getCostItems() == null) continue;
+                for (AvatarPromote.CostItem item : lvl.getCostItems()) {
+                    if (item != null && item.getId() != null) materialIds.add(item.getId());
+                }
+            }
+        }
+        Map<Integer, String> materialNameMap = new HashMap<>();
+        if (!materialIds.isEmpty()) {
+            materialRepository.findAllById(materialIds)
+                    .forEach(m -> materialNameMap.put(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
+        }
+
+        List<AvatarBaseInfoDTO.LevelUpMaterial> levelUpMaterials = new ArrayList<>();
+        if (promoteLevels != null) {
+            for (AvatarPromote.PromoteLevel lvl : promoteLevels) {
+                if (lvl.getPromoteLevel() == 0) continue;
+                AvatarBaseInfoDTO.LevelUpMaterial levelUpMaterial = new AvatarBaseInfoDTO.LevelUpMaterial();
+                levelUpMaterial.setPromoteLevel(lvl.getPromoteLevel());
+                levelUpMaterial.setMaxLevel(lvl.getUnlockMaxLevel());
+                levelUpMaterial.setMora(lvl.getScoinCost());
+
+                List<AvatarBaseInfoDTO.CostItem> costItems = new ArrayList<>();
+                if (lvl.getCostItems() != null) {
+                    for (AvatarPromote.CostItem item : lvl.getCostItems()) {
+                        if (item == null || item.getId() == null) continue;
+                        AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
+                        costItem.setId(item.getId());
+                        costItem.setName(materialNameMap.get(item.getId()));
+                        costItem.setCount(item.getCount());
+                        costItems.add(costItem);
+                    }
+                }
+                levelUpMaterial.setCostItems(costItems);
+                levelUpMaterials.add(levelUpMaterial);
+            }
+        }
+
+        AvatarBaseInfoDTO.Material material = new AvatarBaseInfoDTO.Material();
+        material.setLevelUpMaterial(levelUpMaterials);
+        material.setTalentUpMaterial(new ArrayList<>());
+        avatarBaseInfoDTO.setMaterials(List.of(material));
+
         return avatarBaseInfoDTO;
     }
 
@@ -301,75 +337,4 @@ public class AvatarServiceImpl implements AvatarService {
             default -> stat;
         };
     }
-
-    //    private final MongoTemplate mongoTemplate;
-//    public AvatarServiceImpl(MongoTemplate mongoTemplate) {
-//        this.mongoTemplate = mongoTemplate;
-//    }
-
-//    @Override
-//    public List<Map<String, Object>> searchAvatar(AvatarList query) {
-//        Criteria criteria = new Criteria();
-//
-//        // 隐藏 beta 条目
-//        criteria.and("beta").ne(true);
-//
-//        if (query.getName() != null && !query.getName().isEmpty()) {
-//            criteria.and("name").regex(".*" + query.getName() + ".*", "i");
-//        }
-//
-//        Query mongoQuery = new Query(criteria);
-//        mongoQuery.with(
-//                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "_id"));
-//
-//        List<org.bson.Document> docs = mongoTemplate.find(mongoQuery, org.bson.Document.class, "avatar");
-//        List<Map<String, Object>> result = new ArrayList<>();
-//        for (org.bson.Document doc : docs) {
-//            Map<String, Object> map = new HashMap<>();
-//            map.putAll(doc);
-//            map.put("id", doc.get("_id"));
-//            map.remove("_id");
-//            result.add(map);
-//        }
-//        return result;
-//    }
-
-//    @Override
-//    public List<Map<String, Object>> searchAvatarSimple(AvatarList query) {
-//        Criteria criteria = new Criteria();
-//
-//        // 隐藏 beta 条目
-//        criteria.and("beta").ne(true);
-//
-//        if (query.getName() != null && !query.getName().isEmpty()) {
-//            criteria.and("name").regex(".*" + query.getName() + ".*", "i");
-//        }
-//        if (query.getStar() != null && !query.getStar().isEmpty()) {
-//            criteria.and("star").in(query.getStar());
-//        }
-//        if (query.getElem() != null && !query.getElem().isEmpty()) {
-//            criteria.and("elem").in(query.getElem());
-//        }
-//        if (query.getWeapon() != null && !query.getWeapon().isEmpty()) {
-//            criteria.and("weapon").in(query.getWeapon());
-//        }
-//
-//        Query mongoQuery = new Query(criteria);
-//        mongoQuery.with(
-//                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "_id"));
-//
-//        // 只查询需要的字段：_id, name, star, elem, weapon
-//        mongoQuery.fields().include("name", "star", "elem", "weapon");
-//
-//        List<org.bson.Document> docs = mongoTemplate.find(mongoQuery, org.bson.Document.class, "avatar");
-//        List<Map<String, Object>> result = new ArrayList<>();
-//        for (org.bson.Document doc : docs) {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put("name", doc.get("name"));
-//            map.put("elem", doc.get("elem"));
-//            map.put("weapon", doc.get("weapon"));
-//            result.add(map);
-//        }
-//        return result;
-//    }
 }
