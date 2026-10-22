@@ -13,6 +13,7 @@ public class AttactAttenuation {
     @Id
     private String id;
 
+    // 衰减与破韧序列
     @Field("resetCycle")
     private Double resetCycle;
     @Field("durabilitySequence")

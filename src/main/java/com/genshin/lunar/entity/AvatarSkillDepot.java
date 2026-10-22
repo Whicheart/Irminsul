@@ -13,6 +13,7 @@ public class AvatarSkillDepot {
     @Id
     private Integer id;
 
+    // 技能与命座所依赖的技能 ID
     @Field("skills")
     private List<Integer> skills;
     @Field("talents")
@@ -20,16 +21,19 @@ public class AvatarSkillDepot {
     @Field("energySkill")
     private Integer energySkill;
 
+    // 固有天赋组
     @Field("proudSkillGroups")
     private List<ProudSkillGroup> proudSkillGroups;
     @Field("specialProudSkillGroups")
     private List<SpecialProudSkillGroup> specialProudSkillGroups;
 
+    // 始基力与命之座名称
     @Field("arkheType")
     private String arkheType;
     @Field("talentStarName")
     private String talentStarName;
 
+    // 普通固有天赋组
     @Data
     public static class ProudSkillGroup {
         @Field("proudSkillGroupId")
@@ -38,6 +42,7 @@ public class AvatarSkillDepot {
         private Integer unlockPromoteLevel;
     }
 
+    // 特殊固有天赋组
     @Data
     public static class SpecialProudSkillGroup {
         @Field("proudSkillGroupId")

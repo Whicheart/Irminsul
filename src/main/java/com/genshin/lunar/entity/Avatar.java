@@ -13,11 +13,13 @@ public class Avatar {
     @Id
     private Integer id;
 
+    // 名称与描述的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
     @Field("descTextMapHash")
     private String descTextMapHash;
 
+    // 基础属性白值
     @Field("hpBase")
     private Double hpBase;
     @Field("attackBase")
@@ -33,11 +35,13 @@ public class Avatar {
     @Field("elementMastery")
     private Double elementMastery;
 
+    // 关联的技能组与突破组 ID
     @Field("skillDepotId")
     private Integer skillDepotId;
     @Field("avatarPromoteId")
     private Integer avatarPromoteId;
 
+    // 分类枚举与标签
     @Field("weaponType")
     private String weaponType;
     @Field("qualityType")
@@ -53,6 +57,7 @@ public class Avatar {
     @Field("isRangeAttack")
     private Boolean isRangeAttack;
 
+    // 立绘与图标资源名
     @Field("imageName")
     private String imageName;
     @Field("sideIconName")
@@ -60,6 +65,7 @@ public class Avatar {
     @Field("iconName")
     private String iconName;
 
+    // 属性成长曲线
     @Field("propGrowCurves")
     private List<PropGrowCurve> propGrowCurves;
     @Data

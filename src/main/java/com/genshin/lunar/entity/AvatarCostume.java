@@ -11,14 +11,17 @@ public class AvatarCostume {
     @Id
     private Integer id;
 
+    // 所属角色 ID（注意字段名是 characterId）
     @Field("characterId")
     private Integer characterId;
 
+    // 名称与描述的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
     @Field("descTextMapHash")
     private String descTextMapHash;
 
+    // 品质、获取道具与默认装扮标记
     @Field("quality")
     private Integer quality;
     @Field("itemId")
@@ -28,6 +31,7 @@ public class AvatarCostume {
     @Field("isDefault")
     private Boolean isDefault;
 
+    // 立绘资源名
     @Field("sideIconName")
     private String sideIconName;
     @Field("frontIconName")

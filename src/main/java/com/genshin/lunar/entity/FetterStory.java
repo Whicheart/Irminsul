@@ -13,11 +13,13 @@ public class FetterStory {
     @Id
     private String id;
 
+    // 所属角色与故事编号
     @Field("avatarId")
     private Integer avatarId;
     @Field("fetterId")
     private Integer fetterId;
 
+    // 标题与正文（含另一版）
     @Field("storyTitleTextMapHash")
     private String storyTitleTextMapHash;
     @Field("storyContextTextMapHash")
@@ -27,6 +29,7 @@ public class FetterStory {
     @Field("storyContext2TextMapHash")
     private String storyContext2TextMapHash;
 
+    // 提示哈希
     @Field("tips")
     private List<String> tips;
 }

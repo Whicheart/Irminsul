@@ -11,6 +11,7 @@ public class AvatarFettersLevel {
     @Id
     private Integer level;
 
+    // 升至下一级所需经验
     @Field("needExp")
     private Integer needExp;
 }

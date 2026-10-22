@@ -11,6 +11,7 @@ public class AvatarLevel {
     @Id
     private Integer level;
 
+    // 升级所需经验
     @Field("exp")
-    private Integer needExp;
+    private Integer exp;
 }
