@@ -1,20 +1,18 @@
 package com.genshin.lunar.controller;
 
 import com.genshin.lunar.common.Result;
-import com.genshin.lunar.dto.AvatarBaseInfoDTO;
-import com.genshin.lunar.dto.AvatarList;
+import com.genshin.lunar.dto.*;
 import com.genshin.lunar.service.AvatarService;
 import java.util.List;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/avatar")
 public class AvatarController {
     private final AvatarService avatarService;
-
-    public AvatarController(AvatarService avatarService) {
-        this.avatarService = avatarService;
-    }
 
     @GetMapping("/list")
     public Result<List<AvatarList.AvatarBrief>> getList() {
@@ -30,13 +28,18 @@ public class AvatarController {
         return Result.ok(detail);
     }
 
-//    @GetMapping("/search")
-//    public Result<List<Map<String, Object>>> searchAvatar(AvatarList query) {
-//        return Result.ok(avatarService.searchAvatar(query));
-//    }
-//
-//    @GetMapping("/simple_search")
-//    public Result<List<Map<String, Object>>> searchSimple(AvatarList query) {
-//        return Result.ok(avatarService.searchAvatarSimple(query));
-//    }
+    @GetMapping("/{id}/outfits")
+    public Result<AvatarOutfitDTO> getAvatarOutfits(@PathVariable Integer id) {
+        return Result.ok(avatarService.getAvatarOutfits(id));
+    }
+
+    @GetMapping("/{id}/stories")
+    public Result<AvatarStoryDTO> getAvatarStories(@PathVariable Integer id) {
+        return Result.ok(avatarService.getAvatarStories(id));
+    }
+
+    @GetMapping("/{id}/voices")
+    public Result<AvatarVoiceDTO> getAvatarVoices(@PathVariable Integer id) {
+        return Result.ok(avatarService.getAvatarVoices(id));
+    }
 }
