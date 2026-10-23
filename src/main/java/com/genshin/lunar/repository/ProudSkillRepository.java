@@ -1,0 +1,13 @@
+package com.genshin.lunar.repository;
+
+import com.genshin.lunar.entity.ProudSkill;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ProudSkillRepository extends MongoRepository<ProudSkill, Integer> {
+    // 按组 ID 查所有等级的天赋数据，并按等级升序排列
+    List<ProudSkill> findByProudSkillGroupIdOrderByLevelAsc(Integer proudSkillGroupId);
+}
