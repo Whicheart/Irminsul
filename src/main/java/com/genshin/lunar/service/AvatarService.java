@@ -10,4 +10,6 @@ public interface AvatarService {
     AvatarOutfitDTO getAvatarOutfits(Integer id);
     AvatarStoryDTO getAvatarStories(Integer id);
     AvatarVoiceDTO getAvatarVoices(Integer id);
+    AvatarConstellationDTO getAvatarConstellations(Integer id);
+    AvatarSkillDTO getAvatarSkills(Integer id);
 }
