@@ -30,6 +30,7 @@ public class AvatarServiceImpl implements AvatarService {
     private final AvatarCostumeRepository avatarCostumeRepository;
     private final AvatarSkillDepotRepository avatarSkillDepotRepository;
     private final AvatarSkillRepository avatarSkillRepository;
+    private final AvatarTalentRepository avatarTalentRepository;
     private final ProudSkillRepository proudSkillRepository;
 
     @Override
@@ -453,6 +454,149 @@ public class AvatarServiceImpl implements AvatarService {
         avatarVoiceDTO.setBattles(battles);
 
         return avatarVoiceDTO;
+    }
+
+    @Override
+    public AvatarConstellationDTO getAvatarConstellations(Integer id) {
+        AvatarConstellationDTO avatarConstellationDTO = new AvatarConstellationDTO();
+        List<AvatarConstellationDTO.Constellation> constellations = new ArrayList<>();
+
+        Avatar avatar = avatarRepository.findById(id).orElse(null);
+        if (avatar == null) return null;
+
+        // 命座顺序由技能仓库的 talents 数组决定，下标 0–5 即 1–6 命
+        AvatarSkillDepot avatarSkillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        if (avatarSkillDepot != null && avatarSkillDepot.getTalents() != null) {
+            List<Integer> talentIds = new ArrayList<>();
+            for (Integer talentId : avatarSkillDepot.getTalents()) {
+                // talents 末尾有 0 占位，跳过
+                if (talentId == null || talentId == 0) continue;
+                talentIds.add(talentId);
+            }
+
+            Map<Integer, AvatarTalent> talentMap = new HashMap<>();
+            if (!talentIds.isEmpty()) {
+                avatarTalentRepository.findByIdIn(talentIds)
+                        .forEach(t -> talentMap.put(t.getId(), t));
+            }
+
+            for (Integer talentId : talentIds) {
+                AvatarTalent avatarTalent = talentMap.get(talentId);
+                if (avatarTalent == null) continue;
+
+                AvatarConstellationDTO.Constellation constellation = new AvatarConstellationDTO.Constellation();
+                constellation.setId(avatarTalent.getId());
+                constellation.setName(textMapChsUtil.getText(avatarTalent.getNameTextMapHash()));
+                constellation.setDesc(textMapChsUtil.getText(avatarTalent.getDescTextMapHash()));
+                constellation.setDescExtra(textMapChsUtil.getText(avatarTalent.getDescExtraTextMapHash()));
+                constellation.setIcon(avatarTalent.getIcon());
+                constellations.add(constellation);
+            }
+        }
+
+        avatarConstellationDTO.setId(id);
+        avatarConstellationDTO.setConstellations(constellations);
+
+        return avatarConstellationDTO;
+    }
+
+    @Override
+    public AvatarSkillDTO getAvatarSkills(Integer id) {
+        AvatarSkillDTO avatarSkillDTO = new AvatarSkillDTO();
+        List<AvatarSkillDTO.CombatSkill> combatSkills = new ArrayList<>();
+        List<AvatarSkillDTO.PassiveSkill> passiveSkills = new ArrayList<>();
+
+        Avatar avatar = avatarRepository.findById(id).orElse(null);
+        if (avatar == null) return null;
+
+        AvatarSkillDepot avatarSkillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        if (avatarSkillDepot != null) {
+            // 主动技能：skills 里是普攻、战技及霰步这类附属技能，元素爆发单独在 energySkill 里
+            List<Integer> skillIds = new ArrayList<>();
+            if (avatarSkillDepot.getSkills() != null) {
+                for (Integer skillId : avatarSkillDepot.getSkills()) {
+                    // skills 末尾有 0 占位，跳过
+                    if (skillId == null || skillId == 0) continue;
+                    skillIds.add(skillId);
+                }
+            }
+            Integer energySkillId = avatarSkillDepot.getEnergySkill();
+            if (energySkillId != null && energySkillId != 0 && !skillIds.contains(energySkillId)) {
+                skillIds.add(energySkillId);
+            }
+
+            for (Integer skillId : skillIds) {
+                AvatarSkill avatarSkill = avatarSkillRepository.findById(skillId).orElse(null);
+                if (avatarSkill == null) continue;
+
+                AvatarSkillDTO.CombatSkill combatSkill = new AvatarSkillDTO.CombatSkill();
+                combatSkill.setId(avatarSkill.getId());
+                combatSkill.setName(textMapChsUtil.getText(avatarSkill.getNameTextMapHash()));
+                combatSkill.setDesc(textMapChsUtil.getText(avatarSkill.getDescTextMapHash()));
+                combatSkill.setExtraDesc(textMapChsUtil.getText(avatarSkill.getExtraDescTextMapHash()));
+                combatSkill.setDescExtra(textMapChsUtil.getText(avatarSkill.getDescExtraTextMapHash()));
+                combatSkill.setIcon(avatarSkill.getSkillIcon());
+
+                // 技能数值按天赋组逐级展开，组内等级 1–15 都保留
+                List<AvatarSkillDTO.CombatSkillData> combatSkillDataList = new ArrayList<>();
+                if (avatarSkill.getProudSkillGroupId() != null) {
+                    List<ProudSkill> proudSkills = proudSkillRepository
+                            .findByProudSkillGroupIdOrderByLevelAsc(avatarSkill.getProudSkillGroupId());
+                    for (ProudSkill proudSkill : proudSkills) {
+                        combatSkillDataList.add(buildCombatSkillData(proudSkill));
+                    }
+                }
+                combatSkill.setCombatSkillDataList(combatSkillDataList);
+
+                combatSkills.add(combatSkill);
+            }
+
+            // 固有天赋：每个天赋组只取 1 级那条，组里其余等级是升级节点
+            if (avatarSkillDepot.getProudSkillGroups() != null) {
+                for (AvatarSkillDepot.ProudSkillGroup proudSkillGroup : avatarSkillDepot.getProudSkillGroups()) {
+                    if (proudSkillGroup == null || proudSkillGroup.getProudSkillGroupId() == null) continue;
+
+                    List<ProudSkill> proudSkills = proudSkillRepository
+                            .findByProudSkillGroupIdOrderByLevelAsc(proudSkillGroup.getProudSkillGroupId());
+                    for (ProudSkill proudSkill : proudSkills) {
+                        if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
+
+                        AvatarSkillDTO.PassiveSkill passiveSkill = new AvatarSkillDTO.PassiveSkill();
+                        passiveSkill.setId(proudSkill.getId());
+                        passiveSkill.setName(textMapChsUtil.getText(proudSkill.getNameTextMapHash()));
+                        passiveSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
+                        passiveSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
+                        passiveSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
+                        passiveSkills.add(passiveSkill);
+                        break;
+                    }
+                }
+            }
+        }
+
+        avatarSkillDTO.setId(id);
+        avatarSkillDTO.setCombatSkills(combatSkills);
+        avatarSkillDTO.setPassiveSkills(passiveSkills);
+
+        return avatarSkillDTO;
+    }
+
+    private AvatarSkillDTO.CombatSkillData buildCombatSkillData(ProudSkill proudSkill) {
+        AvatarSkillDTO.CombatSkillData combatSkillData = new AvatarSkillDTO.CombatSkillData();
+        combatSkillData.setLevel(proudSkill.getLevel());
+        combatSkillData.setParamList(proudSkill.getParamList());
+
+        // paramDescList 存的是哈希，逐条翻译；解不出的直接跳过
+        List<String> paramDescList = new ArrayList<>();
+        if (proudSkill.getParamDescList() != null) {
+            for (String paramDescHash : proudSkill.getParamDescList()) {
+                String paramDesc = textMapChsUtil.getText(paramDescHash);
+                if (paramDesc != null) paramDescList.add(paramDesc);
+            }
+        }
+        combatSkillData.setParamDescList(paramDescList);
+
+        return combatSkillData;
     }
 
     private String translateQuality(String quality) {

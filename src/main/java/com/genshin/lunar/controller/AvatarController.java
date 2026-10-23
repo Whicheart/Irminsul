@@ -42,4 +42,14 @@ public class AvatarController {
     public Result<AvatarVoiceDTO> getAvatarVoices(@PathVariable Integer id) {
         return Result.ok(avatarService.getAvatarVoices(id));
     }
+
+    @GetMapping("/{id}/constellations")
+    public Result<AvatarConstellationDTO> getAvatarConstellations(@PathVariable Integer id) {
+        return Result.ok(avatarService.getAvatarConstellations(id));
+    }
+
+    @GetMapping("/{id}/skills")
+    public Result<AvatarSkillDTO> getAvatarSkills(@PathVariable Integer id) {
+        return Result.ok(avatarService.getAvatarSkills(id));
+    }
 }
