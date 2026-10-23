@@ -28,6 +28,9 @@ public class AvatarServiceImpl implements AvatarService {
     private final AvatarPromoteRepository avatarPromoteRepository;
     private final MaterialRepository materialRepository;
     private final AvatarCostumeRepository avatarCostumeRepository;
+    private final AvatarSkillDepotRepository avatarSkillDepotRepository;
+    private final AvatarSkillRepository avatarSkillRepository;
+    private final ProudSkillRepository proudSkillRepository;
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(){
@@ -285,9 +288,63 @@ public class AvatarServiceImpl implements AvatarService {
             }
         }
 
+        // 天赋材料：技能仓库取天赋组，再按组取各等级消耗
+        List<AvatarBaseInfoDTO.TalentUpMaterial> talentUpMaterials = new ArrayList<>();
+        AvatarSkillDepot skillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        Integer proudSkillGroupId = null;
+        if (skillDepot != null && skillDepot.getSkills() != null) {
+            for (Integer skillId : skillDepot.getSkills()) {
+                // skills 末尾有 0 占位，跳过
+                if (skillId == null || skillId == 0) continue;
+                AvatarSkill avatarSkill = avatarSkillRepository.findById(skillId).orElse(null);
+                if (avatarSkill != null && avatarSkill.getProudSkillGroupId() != null) {
+                    // 三个天赋共用同一套材料，只取第一个技能所在组
+                    proudSkillGroupId = avatarSkill.getProudSkillGroupId();
+                    break;
+                }
+            }
+        }
+
+        if (proudSkillGroupId != null) {
+            List<ProudSkill> proudSkills =
+                    proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(proudSkillGroupId);
+
+            List<Integer> talentMaterialIds = new ArrayList<>();
+            for (ProudSkill proudSkill : proudSkills) {
+                if (proudSkill.getCostItems() == null) continue;
+                for (ProudSkill.CostItem item : proudSkill.getCostItems()) {
+                    if (item != null && item.getId() != null) talentMaterialIds.add(item.getId());
+                }
+            }
+            if (!talentMaterialIds.isEmpty()) {
+                materialRepository.findAllById(talentMaterialIds)
+                        .forEach(m -> materialNameMap.putIfAbsent(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
+            }
+
+            for (ProudSkill proudSkill : proudSkills) {
+                AvatarBaseInfoDTO.TalentUpMaterial talentUpMaterial = new AvatarBaseInfoDTO.TalentUpMaterial();
+                talentUpMaterial.setLevel(proudSkill.getLevel());
+                talentUpMaterial.setMora(proudSkill.getCoinCost());
+
+                List<AvatarBaseInfoDTO.CostItem> costItems = new ArrayList<>();
+                if (proudSkill.getCostItems() != null) {
+                    for (ProudSkill.CostItem item : proudSkill.getCostItems()) {
+                        if (item == null || item.getId() == null) continue;
+                        AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
+                        costItem.setId(item.getId());
+                        costItem.setName(materialNameMap.get(item.getId()));
+                        costItem.setCount(item.getCount());
+                        costItems.add(costItem);
+                    }
+                }
+                talentUpMaterial.setCostItems(costItems);
+                talentUpMaterials.add(talentUpMaterial);
+            }
+        }
+
         AvatarBaseInfoDTO.Material material = new AvatarBaseInfoDTO.Material();
         material.setLevelUpMaterial(levelUpMaterials);
-        material.setTalentUpMaterial(new ArrayList<>());
+        material.setTalentUpMaterial(talentUpMaterials);
         avatarBaseInfoDTO.setMaterials(List.of(material));
 
         return avatarBaseInfoDTO;
