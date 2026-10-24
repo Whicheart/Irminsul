@@ -5,10 +5,7 @@ import com.genshin.lunar.entity.*;
 import com.genshin.lunar.repository.*;
 import com.genshin.lunar.service.AvatarService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.genshin.lunar.util.TextMapChsUtil;
@@ -33,6 +30,8 @@ public class AvatarServiceImpl implements AvatarService {
     private final AvatarTalentRepository avatarTalentRepository;
     private final ProudSkillRepository proudSkillRepository;
 
+    private static final Set<String> IGNORE_AVATARS = Set.of("旅行者", "奇偶·男性", "奇偶·女性");
+
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes){
         List<Avatar> avatars = avatarRepository.findAll();
@@ -52,9 +51,9 @@ public class AvatarServiceImpl implements AvatarService {
         List<AvatarList.AvatarBrief> result = new ArrayList<>();
 
         for (Avatar avatar : avatars) {
-            if (avatar.getId() < 10000002 || avatar.getId() > 10000899) {
-                continue;
-            }
+            String currentName = textMapChsUtil.getText(avatar.getNameTextMapHash());
+            if (avatar.getId() < 10000002 || avatar.getId() > 10000899) continue;
+            if (IGNORE_AVATARS.contains(currentName)) continue;
 
             AvatarList.AvatarBrief brief = new AvatarList.AvatarBrief();
 
@@ -62,7 +61,7 @@ public class AvatarServiceImpl implements AvatarService {
             brief.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
             brief.setQualityType(avatar.getQualityType());
             brief.setWeaponType(avatar.getWeaponType());
-            brief.setSplashIconName(avatar.getIconName() + "_Splash");
+            brief.setGachaIconName(avatar.getIconName() + "_Gacha");
 //            brief.setQualityType(translateQuality(avatar.getQualityType()));
 //            brief.setWeaponType(translateWeapon(avatar.getWeaponType()));
 
@@ -85,21 +84,10 @@ public class AvatarServiceImpl implements AvatarService {
             return s1.compareTo(s2);
         });
 
-        if (name != null && !name.trim().isEmpty()) {
-            result = result.stream().filter(a -> a.getName() != null && a.getName().contains(name.trim())).collect(Collectors.toList());
-        }
-
-        if (elements != null && !elements.isEmpty()) {
-            result = result.stream().filter(a -> elements.contains(a.getElement())).collect(Collectors.toList());
-        }
-
-        if (weaponTypes != null && !weaponTypes.isEmpty()) {
-            result = result.stream().filter(a -> weaponTypes.contains(a.getWeaponType())).collect(Collectors.toList());
-        }
-
-        if (qualityTypes != null && !qualityTypes.isEmpty()) {
-            result = result.stream().filter(a -> qualityTypes.contains(a.getQualityType())).collect(Collectors.toList());
-        }
+        if (name != null && !name.trim().isEmpty()) result = result.stream().filter(a -> a.getName() != null && a.getName().contains(name.trim())).collect(Collectors.toList());
+        if (elements != null && !elements.isEmpty()) result = result.stream().filter(a -> elements.contains(a.getElement())).collect(Collectors.toList());
+        if (weaponTypes != null && !weaponTypes.isEmpty()) result = result.stream().filter(a -> weaponTypes.contains(a.getWeaponType())).collect(Collectors.toList());
+        if (qualityTypes != null && !qualityTypes.isEmpty()) result = result.stream().filter(a -> qualityTypes.contains(a.getQualityType())).collect(Collectors.toList());
 
         return result;
     }
