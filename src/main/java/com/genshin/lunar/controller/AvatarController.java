@@ -15,8 +15,11 @@ public class AvatarController {
     private final AvatarService avatarService;
 
     @GetMapping("/list")
-    public Result<List<AvatarList.AvatarBrief>> getList() {
-        return Result.ok(avatarService.getAvatarList());
+    public Result<List<AvatarList.AvatarBrief>> getList(@RequestParam(required = false) String name,
+                                                        @RequestParam(required = false) List<String> elements,
+                                                        @RequestParam(required = false) List<String> weaponTypes,
+                                                        @RequestParam(required = false) List<String> qualityTypes) {
+        return Result.ok(avatarService.getAvatarList(name, elements, weaponTypes, qualityTypes));
     }
 
     @GetMapping("/{id}/base-info")

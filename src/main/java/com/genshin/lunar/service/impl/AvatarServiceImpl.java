@@ -34,7 +34,7 @@ public class AvatarServiceImpl implements AvatarService {
     private final ProudSkillRepository proudSkillRepository;
 
     @Override
-    public List<AvatarList.AvatarBrief> getAvatarList(){
+    public List<AvatarList.AvatarBrief> getAvatarList(String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes){
         List<Avatar> avatars = avatarRepository.findAll();
         List<AvatarCodex> codexes = avatarCodexRepository.findAll();
         List<FetterInfo> infos = fetterInfoRepository.findAll();
@@ -84,6 +84,22 @@ public class AvatarServiceImpl implements AvatarService {
             Integer s2 = b.getSortId() == null ? 99999 : b.getSortId();
             return s1.compareTo(s2);
         });
+
+        if (name != null && !name.trim().isEmpty()) {
+            result = result.stream().filter(a -> a.getName() != null && a.getName().contains(name.trim())).collect(Collectors.toList());
+        }
+
+        if (elements != null && !elements.isEmpty()) {
+            result = result.stream().filter(a -> elements.contains(a.getElement())).collect(Collectors.toList());
+        }
+
+        if (weaponTypes != null && !weaponTypes.isEmpty()) {
+            result = result.stream().filter(a -> weaponTypes.contains(a.getWeaponType())).collect(Collectors.toList());
+        }
+
+        if (qualityTypes != null && !qualityTypes.isEmpty()) {
+            result = result.stream().filter(a -> qualityTypes.contains(a.getQualityType())).collect(Collectors.toList());
+        }
 
         return result;
     }
@@ -627,7 +643,7 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     private String translateElement(String element) {
-        if (element == null) return "未知";
+        if (element == null) return "UNKNOWN";
         return switch (element) {
             case "火" -> "PYRO";
             case "水" -> "HYDRO";
