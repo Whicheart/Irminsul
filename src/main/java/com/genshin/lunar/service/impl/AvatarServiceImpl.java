@@ -60,8 +60,11 @@ public class AvatarServiceImpl implements AvatarService {
 
             brief.setId(avatar.getId());
             brief.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
-            brief.setQualityType(translateQuality(avatar.getQualityType()));
-            brief.setWeaponType(translateWeapon(avatar.getWeaponType()));
+            brief.setQualityType(avatar.getQualityType());
+            brief.setWeaponType(avatar.getWeaponType());
+            brief.setSplashIconName(avatar.getIconName() + "_Splash");
+//            brief.setQualityType(translateQuality(avatar.getQualityType()));
+//            brief.setWeaponType(translateWeapon(avatar.getWeaponType()));
 
             AvatarCodex codex = codexMap.get(avatar.getId());
             if (codex != null) {
@@ -70,7 +73,7 @@ public class AvatarServiceImpl implements AvatarService {
 
             FetterInfo info = infoMap.get(avatar.getId());
             if (info != null) {
-                brief.setElement(textMapChsUtil.getText(info.getAvatarVisionBeforTextMapHash()));
+                brief.setElement(translateElement(textMapChsUtil.getText(info.getAvatarVisionBeforTextMapHash())));
             }
 
             result.add(brief);
@@ -620,6 +623,20 @@ public class AvatarServiceImpl implements AvatarService {
             case "WEAPON_CATALYST" -> "法器";
             case "WEAPON_CROSSBOW" -> "枪";
             default -> weapon;
+        };
+    }
+
+    private String translateElement(String element) {
+        if (element == null) return "未知";
+        return switch (element) {
+            case "火" -> "PYRO";
+            case "水" -> "HYDRO";
+            case "冰" -> "CRYO";
+            case "雷" -> "ELECTRO";
+            case "风" -> "ANEMO";
+            case "岩" -> "GEO";
+            case "草" -> "DENDRO";
+            default -> element;
         };
     }
 
