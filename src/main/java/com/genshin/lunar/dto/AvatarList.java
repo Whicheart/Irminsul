@@ -12,7 +12,7 @@ public class AvatarList {
     public static class AvatarBrief {
         private Integer id;
         private Integer sortId;
-        private String splashIconName;
+        private String GachaIconName;
         private String name;
         private String qualityType;
         private String element;
