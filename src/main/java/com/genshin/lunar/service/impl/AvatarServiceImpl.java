@@ -79,9 +79,9 @@ public class AvatarServiceImpl implements AvatarService {
         }
 
         result.sort((a, b) -> {
-            Integer s1 = a.getSortId() == null ? 99999 : a.getSortId();
-            Integer s2 = b.getSortId() == null ? 99999 : b.getSortId();
-            return s1.compareTo(s2);
+            Integer s1 = a.getSortId() == null ? -1 : a.getSortId();
+            Integer s2 = b.getSortId() == null ? -1 : b.getSortId();
+            return s2.compareTo(s1);
         });
 
         if (name != null && !name.trim().isEmpty()) result = result.stream().filter(a -> a.getName() != null && a.getName().contains(name.trim())).collect(Collectors.toList());
@@ -350,10 +350,15 @@ public class AvatarServiceImpl implements AvatarService {
             }
         }
 
+        // ==========================================
+        // 材料表组装
+        // ==========================================
         AvatarBaseInfoDTO.Material material = new AvatarBaseInfoDTO.Material();
         material.setLevelUpMaterial(levelUpMaterials);
         material.setTalentUpMaterial(talentUpMaterials);
         avatarBaseInfoDTO.setMaterials(List.of(material));
+
+        avatarBaseInfoDTO.setSplashIconName(avatar.getIconName() + "_Splash");
 
         return avatarBaseInfoDTO;
     }
