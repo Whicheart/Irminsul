@@ -225,11 +225,11 @@ public class AvatarServiceImpl implements AvatarService {
 
                 int currentPromoteLevel = 0;
                 if (level > 80) currentPromoteLevel = 6;
-                else if (level > 70) currentPromoteLevel = 5;
-                else if (level > 60) currentPromoteLevel = 4;
-                else if (level > 50) currentPromoteLevel = 3;
-                else if (level > 40) currentPromoteLevel = 2;
-                else if (level > 20) currentPromoteLevel = 1;
+                else if (level >= 70) currentPromoteLevel = 5;
+                else if (level >= 60) currentPromoteLevel = 4;
+                else if (level >= 50) currentPromoteLevel = 3;
+                else if (level >= 40) currentPromoteLevel = 2;
+                else if (level >= 20) currentPromoteLevel = 1;
 
                 Double hpBonus = hpBonusMap.get(currentPromoteLevel);
                 Double atkBonus = atkBonusMap.get(currentPromoteLevel);
