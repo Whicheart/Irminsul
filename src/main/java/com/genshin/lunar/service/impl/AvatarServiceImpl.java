@@ -517,6 +517,7 @@ public class AvatarServiceImpl implements AvatarService {
         AvatarSkillDTO avatarSkillDTO = new AvatarSkillDTO();
         List<AvatarSkillDTO.CombatSkill> combatSkills = new ArrayList<>();
         List<AvatarSkillDTO.PassiveSkill> passiveSkills = new ArrayList<>();
+        List<AvatarSkillDTO.SpecialProudSkill> specialProudSkills = new ArrayList<>();
 
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) return null;
@@ -584,11 +585,33 @@ public class AvatarServiceImpl implements AvatarService {
                     }
                 }
             }
+
+            if (avatarSkillDepot.getSpecialProudSkillGroups() != null) {
+                for (AvatarSkillDepot.SpecialProudSkillGroup specialProudSkillGroup : avatarSkillDepot.getSpecialProudSkillGroups()) {
+                    if (specialProudSkillGroup == null || specialProudSkillGroup.getProudSkillGroupId() == null) continue;
+
+                    List<ProudSkill> proudSkills = proudSkillRepository
+                        .findByProudSkillGroupIdOrderByLevelAsc(specialProudSkillGroup.getProudSkillGroupId());
+                    for (ProudSkill proudSkill : proudSkills) {
+                        if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
+
+                        AvatarSkillDTO.SpecialProudSkill specialProudSkill = new AvatarSkillDTO.SpecialProudSkill();
+                        specialProudSkill.setId(proudSkill.getId());
+                        specialProudSkill.setName(textMapChsUtil.getText(proudSkill.getNameTextMapHash()));
+                        specialProudSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
+                        specialProudSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
+                        specialProudSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
+                        specialProudSkills.add(specialProudSkill);
+                        break;
+                    }
+                }
+            }
         }
 
         avatarSkillDTO.setId(id);
         avatarSkillDTO.setCombatSkills(combatSkills);
         avatarSkillDTO.setPassiveSkills(passiveSkills);
+        avatarSkillDTO.setSpecialProudSkills(specialProudSkills);
 
         return avatarSkillDTO;
     }
