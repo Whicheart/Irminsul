@@ -9,6 +9,7 @@ public class AvatarSkillDTO {
     private Integer id;
     private List<CombatSkill> combatSkills;
     private List<PassiveSkill> passiveSkills;
+    private List<SpecialProudSkill> specialProudSkills;
 
     @Data
     public static class CombatSkill {
@@ -35,5 +36,14 @@ public class AvatarSkillDTO {
         private Integer level;
         private List<String> paramDescList;
         private List<Double> paramList;
+    }
+
+    @Data
+    public static class SpecialProudSkill {
+        private Integer id;
+        private String name;
+        private String desc;
+        private String descExtra;
+        private String loreDesc;
     }
 }
