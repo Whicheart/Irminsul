@@ -30,6 +30,8 @@ public class AvatarBaseInfoDTO {
 
     private List<Material> materials;
 
+    private String splashIconName;
+
     @Data
     public static class Birth {
         private Integer month;
