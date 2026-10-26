@@ -491,8 +491,9 @@ public class AvatarServiceImpl implements AvatarService {
                 avatarTalentRepository.findByIdIn(talentIds)
                         .forEach(t -> talentMap.put(t.getId(), t));
             }
-
-            for (Integer talentId : talentIds) {
+            
+            for (int i = 0; i < talentIds.size(); i++) {
+                Integer talentId = talentIds.get(i);
                 AvatarTalent avatarTalent = talentMap.get(talentId);
                 if (avatarTalent == null) continue;
 
@@ -501,7 +502,10 @@ public class AvatarServiceImpl implements AvatarService {
                 constellation.setName(textMapChsUtil.getText(avatarTalent.getNameTextMapHash()));
                 constellation.setDesc(textMapChsUtil.getText(avatarTalent.getDescTextMapHash()));
                 constellation.setDescExtra(textMapChsUtil.getText(avatarTalent.getDescExtraTextMapHash()));
-                constellation.setIcon(avatarTalent.getIcon());
+
+                // 后缀数字为 i + 1 (即 1~6)
+                constellation.setConstellationIconName(avatar.getIconName() + "_Constellation_" + (i + 1));
+
                 constellations.add(constellation);
             }
         }
