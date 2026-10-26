@@ -31,6 +31,7 @@ public class AvatarServiceImpl implements AvatarService {
     private final ProudSkillRepository proudSkillRepository;
 
     private static final Set<String> IGNORE_AVATARS = Set.of("旅行者", "奇偶·男性", "奇偶·女性");
+    private static final Set<Integer> IGNORE_SKILLS = Set.of(30506, 11076);
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes){
@@ -556,6 +557,9 @@ public class AvatarServiceImpl implements AvatarService {
                     if (skillId == null || skillId == 0) continue;
                     // 跳过 ID 大于五位数的技能
                     if (skillId >= 100000) continue;
+                    // 跳过部分特殊技能
+                    if (IGNORE_SKILLS.contains(skillId)) continue;
+
                     skillIds.add(skillId);
                 }
             }
