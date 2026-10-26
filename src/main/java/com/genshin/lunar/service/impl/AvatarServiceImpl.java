@@ -491,7 +491,7 @@ public class AvatarServiceImpl implements AvatarService {
                 avatarTalentRepository.findByIdIn(talentIds)
                         .forEach(t -> talentMap.put(t.getId(), t));
             }
-            
+
             for (int i = 0; i < talentIds.size(); i++) {
                 Integer talentId = talentIds.get(i);
                 AvatarTalent avatarTalent = talentMap.get(talentId);
@@ -522,6 +522,7 @@ public class AvatarServiceImpl implements AvatarService {
         List<AvatarSkillDTO.CombatSkill> combatSkills = new ArrayList<>();
         List<AvatarSkillDTO.PassiveSkill> passiveSkills = new ArrayList<>();
         List<AvatarSkillDTO.SpecialProudSkill> specialProudSkills = new ArrayList<>();
+        int passiveIndex = 1;
 
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) return null;
@@ -552,7 +553,7 @@ public class AvatarServiceImpl implements AvatarService {
                 combatSkill.setDesc(textMapChsUtil.getText(avatarSkill.getDescTextMapHash()));
                 combatSkill.setExtraDesc(textMapChsUtil.getText(avatarSkill.getExtraDescTextMapHash()));
                 combatSkill.setDescExtra(textMapChsUtil.getText(avatarSkill.getDescExtraTextMapHash()));
-                combatSkill.setIcon(avatarSkill.getSkillIcon());
+                combatSkill.setSkillIconName(avatarSkill.getSkillIcon());
 
                 // 技能数值按天赋组逐级展开，组内等级 1–15 都保留
                 List<AvatarSkillDTO.CombatSkillData> combatSkillDataList = new ArrayList<>();
@@ -584,6 +585,10 @@ public class AvatarServiceImpl implements AvatarService {
                         passiveSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
                         passiveSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
                         passiveSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
+
+                        passiveSkill.setSkillIconName(avatar.getIconName() + "_Passive_" + passiveIndex);
+                        passiveIndex++;
+
                         passiveSkills.add(passiveSkill);
                         break;
                     }
@@ -605,6 +610,10 @@ public class AvatarServiceImpl implements AvatarService {
                         specialProudSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
                         specialProudSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
                         specialProudSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
+
+                        specialProudSkill.setSkillIconName(avatar.getIconName() + "_Passive_" + passiveIndex);
+                        passiveIndex++;
+
                         specialProudSkills.add(specialProudSkill);
                         break;
                     }
