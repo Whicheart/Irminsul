@@ -535,6 +535,8 @@ public class AvatarServiceImpl implements AvatarService {
                 for (Integer skillId : avatarSkillDepot.getSkills()) {
                     // skills 末尾有 0 占位，跳过
                     if (skillId == null || skillId == 0) continue;
+                    // 跳过 ID 大于五位数的技能
+                    if (skillId >= 100000) continue;
                     skillIds.add(skillId);
                 }
             }
