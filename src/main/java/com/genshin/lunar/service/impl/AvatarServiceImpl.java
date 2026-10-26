@@ -224,7 +224,7 @@ public class AvatarServiceImpl implements AvatarService {
                 Double defMulti = curve.getCurves().get(defCurveType);
 
                 int currentPromoteLevel = 0;
-                if (level > 80) currentPromoteLevel = 6;
+                if (level >= 80) currentPromoteLevel = 6;
                 else if (level >= 70) currentPromoteLevel = 5;
                 else if (level >= 60) currentPromoteLevel = 4;
                 else if (level >= 50) currentPromoteLevel = 3;
@@ -529,6 +529,25 @@ public class AvatarServiceImpl implements AvatarService {
 
         AvatarSkillDepot avatarSkillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
         if (avatarSkillDepot != null) {
+
+            Map<Integer, String> skillIconSuffixMap = new HashMap<>();
+            if (avatarSkillDepot.getSkills() != null) {
+                List<Integer> depotSkills = avatarSkillDepot.getSkills();
+                // 索引 0 为普通攻击
+                if (depotSkills.size() > 0 && depotSkills.get(0) != null && depotSkills.get(0) != 0) {
+                    skillIconSuffixMap.put(depotSkills.get(0), "NormalAttack");
+                }
+                // 索引 1 为元素战技
+                if (depotSkills.size() > 1 && depotSkills.get(1) != null && depotSkills.get(1) != 0) {
+                    skillIconSuffixMap.put(depotSkills.get(1), "ElementSkill");
+                }
+            }
+            // energySkill 为元素爆发
+            Integer energySkillId = avatarSkillDepot.getEnergySkill();
+            if (energySkillId != null && energySkillId != 0) {
+                skillIconSuffixMap.put(energySkillId, "ElementBurst");
+            }
+
             // 主动技能：skills 里是普攻、战技及霰步这类附属技能，元素爆发单独在 energySkill 里
             List<Integer> skillIds = new ArrayList<>();
             if (avatarSkillDepot.getSkills() != null) {
@@ -540,7 +559,6 @@ public class AvatarServiceImpl implements AvatarService {
                     skillIds.add(skillId);
                 }
             }
-            Integer energySkillId = avatarSkillDepot.getEnergySkill();
             if (energySkillId != null && energySkillId != 0 && !skillIds.contains(energySkillId)) {
                 skillIds.add(energySkillId);
             }
@@ -555,13 +573,21 @@ public class AvatarServiceImpl implements AvatarService {
                 combatSkill.setDesc(textMapChsUtil.getText(avatarSkill.getDescTextMapHash()));
                 combatSkill.setExtraDesc(textMapChsUtil.getText(avatarSkill.getExtraDescTextMapHash()));
                 combatSkill.setDescExtra(textMapChsUtil.getText(avatarSkill.getDescExtraTextMapHash()));
-                combatSkill.setSkillIconName(avatarSkill.getSkillIcon());
+
+                // === 修改：判断当前技能类型并拼接对应图标 ===
+                String suffix = skillIconSuffixMap.get(skillId);
+                if (suffix != null) {
+                    combatSkill.setSkillIconName(avatar.getIconName() + "_Talent_" + suffix);
+                } else {
+                    // 兜底：如果是霰步等没在 map 里的特殊技能，保留原本的 skillIcon
+                    combatSkill.setSkillIconName(avatarSkill.getSkillIcon());
+                }
 
                 // 技能数值按天赋组逐级展开，组内等级 1–15 都保留
                 List<AvatarSkillDTO.CombatSkillData> combatSkillDataList = new ArrayList<>();
                 if (avatarSkill.getProudSkillGroupId() != null) {
                     List<ProudSkill> proudSkills = proudSkillRepository
-                            .findByProudSkillGroupIdOrderByLevelAsc(avatarSkill.getProudSkillGroupId());
+                        .findByProudSkillGroupIdOrderByLevelAsc(avatarSkill.getProudSkillGroupId());
                     for (ProudSkill proudSkill : proudSkills) {
                         combatSkillDataList.add(buildCombatSkillData(proudSkill));
                     }
