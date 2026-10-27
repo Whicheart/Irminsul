@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.genshin</groupId>
-    <artifactId>lunar</artifactId>
+    <artifactId>irminsul</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>lunar</name>
-    <description>lunar</description>
+    <name>irminsul</name>
+    <description>irminsul</description>
     <properties>
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
