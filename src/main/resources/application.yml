@@ -2,7 +2,7 @@ spring:
   application:
     name: lunar
   mongodb:
-    uri: mongodb://localhost:27017/GI
+    uri: ${MONGODB_URI:mongodb://localhost:27017/GI}
   jackson:
     serialization:
       indent-output: true

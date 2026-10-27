@@ -1,0 +1,88 @@
+#!/bin/sh
+# ---------------------------------------------------------------------------
+# 提交前敏感信息检查
+#
+# 启用：git config core.hooksPath .githooks
+# 绕过：git commit --no-verify
+#
+# 优先使用 gitleaks（若已安装）扫描暂存区；未安装时退回到下面的内置规则，
+# 不需要任何外部依赖。内置规则只检查本次新增/修改的行，避免历史噪声。
+# ---------------------------------------------------------------------------
+
+set -u
+
+RED=$(printf '\033[31m')
+YEL=$(printf '\033[33m')
+RST=$(printf '\033[0m')
+
+# ---- 1) 有 gitleaks 就让它做完整扫描（熵检测、内置规则库） -----------------
+if command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks protect --staged --redact --no-banner --exit-code 1 >/dev/null 2>&1; then
+    printf '%s[pre-commit] gitleaks 在暂存内容中发现疑似密钥：%s\n\n' "$RED" "$RST"
+    gitleaks protect --staged --redact --no-banner --verbose || true
+    printf '\n%s[pre-commit] 请移除密钥或改用环境变量；确需提交可用 git commit --no-verify 跳过。%s\n' "$YEL" "$RST"
+    exit 1
+  fi
+fi
+
+# ---- 2) 内置规则：提取暂存区新增行，按 “文件:行号:内容” 归一化 ----------------
+DIFF=$(mktemp)
+ADDED=$(mktemp)
+HITS=''
+trap 'rm -f "$DIFF" "$ADDED"' EXIT INT TERM
+
+git diff --cached -U0 --diff-filter=ACM > "$DIFF" || exit 1
+
+awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^@@ / {
+    n = split($0, p, " ")
+    h = p[3]; sub(/^\+/, "", h)
+    split(h, c, ","); line = c[1] + 0
+    next
+  }
+  /^\+/ { printf "%s:%d:%s\n", file, line, substr($0, 2); line++; next }
+' "$DIFF" > "$ADDED"
+
+[ -s "$ADDED" ] || exit 0
+
+rule() { # rule <描述> <扩展正则> [i]
+  desc=$1
+  re=$2
+  ic=${3:-}
+  if [ -n "$ic" ]; then
+    found=$(grep -E -i -e "$re" "$ADDED")
+  else
+    found=$(grep -E -e "$re" "$ADDED")
+  fi
+  [ -z "$found" ] && return 0
+
+  # 白名单：环境变量占位符、示例值/占位串
+  found=$(printf '%s\n' "$found" \
+    | grep -v -E '\$\{' \
+    | grep -v -i -E 'example|placeholder|xxxx|changeit|dummy|your[_-]?key|sample')
+
+  [ -z "$found" ] && return 0
+
+  HITS="$HITS
+$(printf '%s\n' "$found" | sed "s|^|[${desc}] |")"
+}
+
+rule "私钥内容"      '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'
+rule "AWS AccessKey" '(AKIA|ASIA)[0-9A-Z]{16}'
+rule "GitHub Token"  '(gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{50,})'
+rule "OpenAI 密钥"   'sk-[A-Za-z0-9]{20,}'
+rule "Slack Token"   'xox[baprs]-[A-Za-z0-9-]{10,}'
+rule "带口令的连接串" '(mongodb(\+srv)?|mysql|mariadb|postgres(ql)?|redis|amqp)://[^:/@[:space:]]+:[^@[:space:]]+@'
+rule "引号包裹的口令/密钥" '(password|passwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key|credential)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']{8,}["'"'"']' i
+rule "YAML/属性中的口令"   '^[^:]+:[0-9]+:[[:space:]]*(password|passwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key|credential)[[:space:]]*:[[:space:]]*[^[:space:]{$"'"'"'][^[:space:]]{6,}' i
+
+if [ -n "$HITS" ]; then
+  printf '%s[pre-commit] 检测到疑似敏感信息，提交已阻止：%s\n' "$RED" "$RST"
+  printf '%s\n' "$HITS" | sed '/^$/d' | sort -u | sed 's/^/  /'
+  printf '\n%s处理方式：删除该项或改为环境变量占位（如 ${MONGODB_URI}）；' "$YEL"
+  printf '确认是误报可用 git commit --no-verify 跳过。%s\n' "$RST"
+  exit 1
+fi
+
+exit 0
