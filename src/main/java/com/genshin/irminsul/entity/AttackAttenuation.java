@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @Document(collection = "attack_attenuation")
-public class AttactAttenuation {
+public class AttackAttenuation {
     @Id
     private String id;
 

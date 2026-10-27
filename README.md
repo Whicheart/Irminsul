@@ -126,7 +126,7 @@ curl 'http://localhost:8080/api/avatar/10000002/base-info'
 | `material`            | 材料名称                                                       |
 | `text_map_chs_medium` | 文本哈希表，`hash → 中文文本`                                  |
 
-已建模但暂未接入接口：`avatar_ability`、`avatar_fetters_level`、`avatar_level`、`avatar_trace_effect`、`attact_attenuation`、`fetter_character_card`、`material_codex`、`material_source_data`、`text_map_en_medium`。
+已建模但暂未接入接口：`avatar_ability`、`avatar_fetters_level`、`avatar_level`、`avatar_trace_effect`、`attack_attenuation`、`fetter_character_card`、`material_codex`、`material_source_data`、`text_map_en_medium`。
 
 ## 实现约定
 
