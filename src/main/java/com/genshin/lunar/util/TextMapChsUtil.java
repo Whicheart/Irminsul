@@ -2,10 +2,9 @@ package com.genshin.lunar.util;
 
 import com.genshin.lunar.entity.TextMapChsMedium;
 import com.genshin.lunar.repository.TextMapChsMediumRepository;
-import org.springframework.stereotype.Component;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
 @Component
 public class TextMapChsUtil {
@@ -17,7 +16,7 @@ public class TextMapChsUtil {
         this.textMapRepo = textMapRepo;
     }
 
-    public String getText(String hash){
+    public String getText(String hash) {
         if (hash == null || hash.isEmpty() || "0".equals(hash)) {
             return null;
         }

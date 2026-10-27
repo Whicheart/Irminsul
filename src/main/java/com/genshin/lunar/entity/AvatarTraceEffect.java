@@ -14,8 +14,10 @@ public class AvatarTraceEffect {
     // 名称、描述与对应物品 ID
     @Field("nameTextMapHash")
     private String nameTextMapHash;
+
     @Field("descTextMapHash")
     private String descTextMapHash;
+
     @Field("itemId")
     private Integer itemId;
 }

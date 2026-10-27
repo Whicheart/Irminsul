@@ -1,11 +1,10 @@
 package com.genshin.lunar.entity;
 
+import java.util.List;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.List;
 
 @Data
 @Document(collection = "avatar")
@@ -16,62 +15,80 @@ public class Avatar {
     // 名称与描述的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
+
     @Field("descTextMapHash")
     private String descTextMapHash;
 
     // 基础属性白值
     @Field("hpBase")
     private Double hpBase;
+
     @Field("attackBase")
     private Double attackBase;
+
     @Field("defenseBase")
     private Double defenseBase;
+
     @Field("critical")
     private Double critical;
+
     @Field("criticalHurt")
     private Double criticalHurt;
+
     @Field("chargeEfficiency")
     private Double chargeEfficiency;
+
     @Field("elementMastery")
     private Double elementMastery;
 
     // 关联的技能组与突破组 ID
     @Field("skillDepotId")
     private Integer skillDepotId;
+
     @Field("avatarPromoteId")
     private Integer avatarPromoteId;
 
     // 分类枚举与标签
     @Field("weaponType")
     private String weaponType;
+
     @Field("qualityType")
     private String qualityType;
+
     @Field("bodyType")
     private String bodyType;
+
     @Field("useType")
     private String useType;
+
     @Field("avatarIdentityType")
     private String avatarIdentityType;
+
     @Field("tags")
     private List<String> tags;
+
     @Field("isRangeAttack")
     private Boolean isRangeAttack;
 
     // 立绘与图标资源名
     @Field("imageName")
     private String imageName;
+
     @Field("sideIconName")
     private String sideIconName;
+
     @Field("iconName")
     private String iconName;
 
     // 属性成长曲线
     @Field("propGrowCurves")
     private List<PropGrowCurve> propGrowCurves;
+
     @Data
     public static class PropGrowCurve {
         @Field("growCurve")
         private String growCurve;
+
         @Field("type")
         private String type;
     }

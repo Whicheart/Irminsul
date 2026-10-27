@@ -13,8 +13,10 @@ public class AvatarAbility {
 
     @Field("character_key")
     private String characterKey;
+
     @Field("ability_name")
     private String abilityName;
+
     @Field("data")
     private AbilityData data;
 
@@ -25,7 +27,5 @@ public class AvatarAbility {
     }
 
     @Data
-    public static class AbilityDataDefault {
-
-    }
+    public static class AbilityDataDefault {}
 }

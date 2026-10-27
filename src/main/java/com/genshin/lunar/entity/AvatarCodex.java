@@ -14,6 +14,7 @@ public class AvatarCodex {
     // 排序权重
     @Field("sortFactor")
     private Integer sortFactor;
+
     @Field("sortId")
     private Integer sortId;
 

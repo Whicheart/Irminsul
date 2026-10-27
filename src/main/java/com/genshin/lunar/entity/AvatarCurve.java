@@ -1,11 +1,10 @@
 package com.genshin.lunar.entity;
 
+import java.util.Map;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.Map;
 
 @Data
 @Document(collection = "avatar_curve")
