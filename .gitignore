@@ -30,3 +30,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 本地环境配置与密钥（禁止提交） ###
+application-local.*
+application-secret.*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.p12
+*.keystore
