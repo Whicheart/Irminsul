@@ -1,8 +1,7 @@
 package com.genshin.lunar.dto;
 
-import lombok.Data;
-
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class AvatarConstellationDTO {
@@ -16,13 +15,13 @@ public class AvatarConstellationDTO {
         private String desc;
         private String descExtra;
         private String constellationIconName;
-//        private List<Double> paramList;
-//        private List<AddProp> addProps;
+        //        private List<Double> paramList;
+        //        private List<AddProp> addProps;
     }
 
-//    @Data
-//    public static class AddProp {
-//        private String propType;
-//        private Double value;
-//    }
+    //    @Data
+    //    public static class AddProp {
+    //        private String propType;
+    //        private Double value;
+    //    }
 }

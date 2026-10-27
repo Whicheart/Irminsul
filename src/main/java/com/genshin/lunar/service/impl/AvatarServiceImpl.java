@@ -4,11 +4,9 @@ import com.genshin.lunar.dto.*;
 import com.genshin.lunar.entity.*;
 import com.genshin.lunar.repository.*;
 import com.genshin.lunar.service.AvatarService;
-
+import com.genshin.lunar.util.TextMapChsUtil;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.genshin.lunar.util.TextMapChsUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +32,8 @@ public class AvatarServiceImpl implements AvatarService {
     private static final Set<Integer> IGNORE_SKILLS = Set.of(30506, 11076);
 
     @Override
-    public List<AvatarList.AvatarBrief> getAvatarList(String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes){
+    public List<AvatarList.AvatarBrief> getAvatarList(
+            String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes) {
         List<Avatar> avatars = avatarRepository.findAll();
         List<AvatarCodex> codexes = avatarCodexRepository.findAll();
         List<FetterInfo> infos = fetterInfoRepository.findAll();
@@ -63,8 +62,8 @@ public class AvatarServiceImpl implements AvatarService {
             brief.setQualityType(avatar.getQualityType());
             brief.setWeaponType(avatar.getWeaponType());
             brief.setGachaIconName(avatar.getIconName() + "_Gacha");
-//            brief.setQualityType(translateQuality(avatar.getQualityType()));
-//            brief.setWeaponType(translateWeapon(avatar.getWeaponType()));
+            //            brief.setQualityType(translateQuality(avatar.getQualityType()));
+            //            brief.setWeaponType(translateWeapon(avatar.getWeaponType()));
 
             AvatarCodex codex = codexMap.get(avatar.getId());
             if (codex != null) {
@@ -85,10 +84,22 @@ public class AvatarServiceImpl implements AvatarService {
             return s2.compareTo(s1);
         });
 
-        if (name != null && !name.trim().isEmpty()) result = result.stream().filter(a -> a.getName() != null && a.getName().contains(name.trim())).collect(Collectors.toList());
-        if (elements != null && !elements.isEmpty()) result = result.stream().filter(a -> elements.contains(a.getElement())).collect(Collectors.toList());
-        if (weaponTypes != null && !weaponTypes.isEmpty()) result = result.stream().filter(a -> weaponTypes.contains(a.getWeaponType())).collect(Collectors.toList());
-        if (qualityTypes != null && !qualityTypes.isEmpty()) result = result.stream().filter(a -> qualityTypes.contains(a.getQualityType())).collect(Collectors.toList());
+        if (name != null && !name.trim().isEmpty())
+            result = result.stream()
+                    .filter(a -> a.getName() != null && a.getName().contains(name.trim()))
+                    .collect(Collectors.toList());
+        if (elements != null && !elements.isEmpty())
+            result = result.stream()
+                    .filter(a -> elements.contains(a.getElement()))
+                    .collect(Collectors.toList());
+        if (weaponTypes != null && !weaponTypes.isEmpty())
+            result = result.stream()
+                    .filter(a -> weaponTypes.contains(a.getWeaponType()))
+                    .collect(Collectors.toList());
+        if (qualityTypes != null && !qualityTypes.isEmpty())
+            result = result.stream()
+                    .filter(a -> qualityTypes.contains(a.getQualityType()))
+                    .collect(Collectors.toList());
 
         return result;
     }
@@ -104,12 +115,13 @@ public class AvatarServiceImpl implements AvatarService {
 
         AvatarBaseInfoDTO avatarBaseInfoDTO = new AvatarBaseInfoDTO();
         AvatarCodex avatarCodex = avatarCodexRepository.findById(id).orElse(new AvatarCodex());
-        AvatarPromote avatarPromote = avatarPromoteRepository.findById(avatarPromoteId).orElse(new AvatarPromote());
+        AvatarPromote avatarPromote =
+                avatarPromoteRepository.findById(avatarPromoteId).orElse(new AvatarPromote());
         FetterInfo fetterInfo = fetterInfoRepository.findById(id).orElse(new FetterInfo());
         List<AvatarCurve> avatarCurveList = avatarCurveRepository.findAll();
 
-        Map<Integer, AvatarCurve> curveMap = avatarCurveList.stream()
-            .collect(Collectors.toMap(AvatarCurve::getLevel, c -> c));
+        Map<Integer, AvatarCurve> curveMap =
+                avatarCurveList.stream().collect(Collectors.toMap(AvatarCurve::getLevel, c -> c));
 
         String defaultPower = "神之眼";
 
@@ -147,7 +159,7 @@ public class AvatarServiceImpl implements AvatarService {
         AvatarBaseInfoDTO.Power power = new AvatarBaseInfoDTO.Power();
         power.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarPowerBeforTextMapHash()));
         power.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarPowerAfterTextMapHash()));
-        if(power.getBefor() == null) power.setBefor(defaultPower);
+        if (power.getBefor() == null) power.setBefor(defaultPower);
         avatarBaseInfoDTO.setPower(power);
 
         AvatarBaseInfoDTO.Element element = new AvatarBaseInfoDTO.Element();
@@ -208,7 +220,8 @@ public class AvatarServiceImpl implements AvatarService {
                             atkBonusMap.put(pLevel, val);
                         } else if ("FIGHT_PROP_BASE_DEFENSE".equals(prop.getPropType())) {
                             defBonusMap.put(pLevel, val);
-                        } else if (prop.getPropType() != null && !prop.getPropType().isEmpty()) {
+                        } else if (prop.getPropType() != null
+                                && !prop.getPropType().isEmpty()) {
                             ascStatName = prop.getPropType();
                             propBonusMap.put(pLevel, val);
                         }
@@ -252,7 +265,7 @@ public class AvatarServiceImpl implements AvatarService {
         avatarBaseInfoDTO.setDef(defList);
         avatarBaseInfoDTO.setAscensionStatName(translateStat(ascStatName));
         avatarBaseInfoDTO.setAscensionStatValue(propList);
-        if(avatar.getElementMastery() != null) avatarBaseInfoDTO.setElementMastery(avatar.getElementMastery());
+        if (avatar.getElementMastery() != null) avatarBaseInfoDTO.setElementMastery(avatar.getElementMastery());
 
         // ==========================================
         // 材料表
@@ -268,7 +281,8 @@ public class AvatarServiceImpl implements AvatarService {
         }
         Map<Integer, String> materialNameMap = new HashMap<>();
         if (!materialIds.isEmpty()) {
-            materialRepository.findAllById(materialIds)
+            materialRepository
+                    .findAllById(materialIds)
                     .forEach(m -> materialNameMap.put(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
         }
 
@@ -299,13 +313,15 @@ public class AvatarServiceImpl implements AvatarService {
 
         // 天赋材料：技能仓库取天赋组，再按组取各等级消耗
         List<AvatarBaseInfoDTO.TalentUpMaterial> talentUpMaterials = new ArrayList<>();
-        AvatarSkillDepot skillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        AvatarSkillDepot skillDepot =
+                avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
         Integer proudSkillGroupId = null;
         if (skillDepot != null && skillDepot.getSkills() != null) {
             for (Integer skillId : skillDepot.getSkills()) {
                 // skills 末尾有 0 占位，跳过
                 if (skillId == null || skillId == 0) continue;
-                AvatarSkill avatarSkill = avatarSkillRepository.findById(skillId).orElse(null);
+                AvatarSkill avatarSkill =
+                        avatarSkillRepository.findById(skillId).orElse(null);
                 if (avatarSkill != null && avatarSkill.getProudSkillGroupId() != null) {
                     // 三个天赋共用同一套材料，只取第一个技能所在组
                     proudSkillGroupId = avatarSkill.getProudSkillGroupId();
@@ -326,8 +342,10 @@ public class AvatarServiceImpl implements AvatarService {
                 }
             }
             if (!talentMaterialIds.isEmpty()) {
-                materialRepository.findAllById(talentMaterialIds)
-                        .forEach(m -> materialNameMap.putIfAbsent(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
+                materialRepository
+                        .findAllById(talentMaterialIds)
+                        .forEach(m ->
+                                materialNameMap.putIfAbsent(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
             }
 
             for (ProudSkill proudSkill : proudSkills) {
@@ -365,12 +383,12 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     @Override
-    public AvatarOutfitDTO getAvatarOutfits(Integer id){
+    public AvatarOutfitDTO getAvatarOutfits(Integer id) {
         AvatarOutfitDTO avatarOutfitDTO = new AvatarOutfitDTO();
         List<AvatarOutfitDTO.Outfit> outfits = new ArrayList<>();
         List<AvatarCostume> avatarCostumes = avatarCostumeRepository.findByCharacterId(id);
 
-        for(AvatarCostume avatarCostume : avatarCostumes){
+        for (AvatarCostume avatarCostume : avatarCostumes) {
             if (avatarCostume == null) continue;
             AvatarOutfitDTO.Outfit outfit = new AvatarOutfitDTO.Outfit();
             outfit.setId(avatarCostume.getId());
@@ -478,7 +496,8 @@ public class AvatarServiceImpl implements AvatarService {
         if (avatar == null) return null;
 
         // 命座顺序由技能仓库的 talents 数组决定，下标 0–5 即 1–6 命
-        AvatarSkillDepot avatarSkillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        AvatarSkillDepot avatarSkillDepot =
+                avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
         if (avatarSkillDepot != null && avatarSkillDepot.getTalents() != null) {
             List<Integer> talentIds = new ArrayList<>();
             for (Integer talentId : avatarSkillDepot.getTalents()) {
@@ -489,8 +508,7 @@ public class AvatarServiceImpl implements AvatarService {
 
             Map<Integer, AvatarTalent> talentMap = new HashMap<>();
             if (!talentIds.isEmpty()) {
-                avatarTalentRepository.findByIdIn(talentIds)
-                        .forEach(t -> talentMap.put(t.getId(), t));
+                avatarTalentRepository.findByIdIn(talentIds).forEach(t -> talentMap.put(t.getId(), t));
             }
 
             for (int i = 0; i < talentIds.size(); i++) {
@@ -528,7 +546,8 @@ public class AvatarServiceImpl implements AvatarService {
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) return null;
 
-        AvatarSkillDepot avatarSkillDepot = avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        AvatarSkillDepot avatarSkillDepot =
+                avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
         if (avatarSkillDepot != null) {
 
             Map<Integer, String> skillIconSuffixMap = new HashMap<>();
@@ -568,7 +587,8 @@ public class AvatarServiceImpl implements AvatarService {
             }
 
             for (Integer skillId : skillIds) {
-                AvatarSkill avatarSkill = avatarSkillRepository.findById(skillId).orElse(null);
+                AvatarSkill avatarSkill =
+                        avatarSkillRepository.findById(skillId).orElse(null);
                 if (avatarSkill == null) continue;
 
                 AvatarSkillDTO.CombatSkill combatSkill = new AvatarSkillDTO.CombatSkill();
@@ -590,8 +610,8 @@ public class AvatarServiceImpl implements AvatarService {
                 // 技能数值按天赋组逐级展开，组内等级 1–15 都保留
                 List<AvatarSkillDTO.CombatSkillData> combatSkillDataList = new ArrayList<>();
                 if (avatarSkill.getProudSkillGroupId() != null) {
-                    List<ProudSkill> proudSkills = proudSkillRepository
-                        .findByProudSkillGroupIdOrderByLevelAsc(avatarSkill.getProudSkillGroupId());
+                    List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
+                            avatarSkill.getProudSkillGroupId());
                     for (ProudSkill proudSkill : proudSkills) {
                         combatSkillDataList.add(buildCombatSkillData(proudSkill));
                     }
@@ -606,8 +626,8 @@ public class AvatarServiceImpl implements AvatarService {
                 for (AvatarSkillDepot.ProudSkillGroup proudSkillGroup : avatarSkillDepot.getProudSkillGroups()) {
                     if (proudSkillGroup == null || proudSkillGroup.getProudSkillGroupId() == null) continue;
 
-                    List<ProudSkill> proudSkills = proudSkillRepository
-                            .findByProudSkillGroupIdOrderByLevelAsc(proudSkillGroup.getProudSkillGroupId());
+                    List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
+                            proudSkillGroup.getProudSkillGroupId());
                     for (ProudSkill proudSkill : proudSkills) {
                         if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
 
@@ -628,11 +648,13 @@ public class AvatarServiceImpl implements AvatarService {
             }
 
             if (avatarSkillDepot.getSpecialProudSkillGroups() != null) {
-                for (AvatarSkillDepot.SpecialProudSkillGroup specialProudSkillGroup : avatarSkillDepot.getSpecialProudSkillGroups()) {
-                    if (specialProudSkillGroup == null || specialProudSkillGroup.getProudSkillGroupId() == null) continue;
+                for (AvatarSkillDepot.SpecialProudSkillGroup specialProudSkillGroup :
+                        avatarSkillDepot.getSpecialProudSkillGroups()) {
+                    if (specialProudSkillGroup == null || specialProudSkillGroup.getProudSkillGroupId() == null)
+                        continue;
 
-                    List<ProudSkill> proudSkills = proudSkillRepository
-                        .findByProudSkillGroupIdOrderByLevelAsc(specialProudSkillGroup.getProudSkillGroupId());
+                    List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
+                            specialProudSkillGroup.getProudSkillGroupId());
                     for (ProudSkill proudSkill : proudSkills) {
                         if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
 

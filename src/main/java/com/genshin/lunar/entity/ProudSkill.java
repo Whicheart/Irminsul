@@ -1,11 +1,10 @@
 package com.genshin.lunar.entity;
 
+import java.util.List;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.List;
 
 @Data
 @Document(collection = "proud_skill")
@@ -18,29 +17,37 @@ public class ProudSkill {
 
     @Field("level")
     private Integer level;
+
     @Field("proudSkillType")
     private Integer proudSkillType;
+
     @Field("icon")
     private String icon;
 
     @Field("nameTextMapHash")
     private String nameTextMapHash;
+
     @Field("descTextMapHash")
     private String descTextMapHash;
+
     @Field("descExtraTextMapHash")
     private String descExtraTextMapHash;
+
     @Field("loreDescTextMapHash")
     private String loreDescTextMapHash;
 
     @Field("paramDescList")
     private List<String> paramDescList;
+
     @Field("paramList")
     private List<Double> paramList;
+
     @Field("coinCost")
     private Integer coinCost;
 
     @Field("costItems")
     private List<CostItem> costItems;
+
     @Field("addProps")
     private List<AddProp> addProps;
 
@@ -48,6 +55,7 @@ public class ProudSkill {
     public static class CostItem {
         @Field("id")
         private Integer id;
+
         @Field("count")
         private Integer count;
     }
@@ -56,6 +64,7 @@ public class ProudSkill {
     public static class AddProp {
         @Field("propType")
         private String propType;
+
         @Field("value")
         private Double value;
     }

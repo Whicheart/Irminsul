@@ -14,8 +14,10 @@ public class FetterCharacterCard {
     // 所属角色、好感等级与奖励 ID
     @Field("avatarId")
     private Integer avatarId;
+
     @Field("fetterLevel")
     private Integer fetterLevel;
+
     @Field("rewardId")
     private Integer rewardId;
 }

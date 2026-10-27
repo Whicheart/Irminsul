@@ -1,11 +1,10 @@
 package com.genshin.lunar.entity;
 
+import java.util.List;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.List;
 
 @Data
 @Document(collection = "avatar_talent")
@@ -16,14 +15,17 @@ public class AvatarTalent {
     // 名称、描述与完整描述的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
+
     @Field("descTextMapHash")
     private String descTextMapHash;
+
     @Field("descExtraTextMapHash")
     private String descExtraTextMapHash;
 
     // 图标与数值参数
     @Field("icon")
     private String icon;
+
     @Field("paramList")
     private List<Double> paramList;
 
@@ -40,6 +42,7 @@ public class AvatarTalent {
     public static class AddProp {
         @Field("propType")
         private String propType;
+
         @Field("value")
         private Double value;
     }

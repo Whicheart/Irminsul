@@ -18,20 +18,24 @@ public class AvatarCostume {
     // 名称与描述的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
+
     @Field("descTextMapHash")
     private String descTextMapHash;
 
     // 品质、获取道具与默认装扮标记
     @Field("quality")
     private Integer quality;
+
     @Field("itemId")
     private Integer itemId;
+
     @Field("indexID")
     private Integer indexID;
 
     // 立绘资源名
     @Field("sideIconName")
     private String sideIconName;
+
     @Field("frontIconName")
     private String frontIconName;
 

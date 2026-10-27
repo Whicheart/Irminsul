@@ -1,11 +1,10 @@
 package com.genshin.lunar.repository;
 
 import com.genshin.lunar.entity.AvatarTalent;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
-
 import java.util.Collection;
 import java.util.List;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AvatarTalentRepository extends MongoRepository<AvatarTalent, Integer> {

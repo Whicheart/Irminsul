@@ -4,7 +4,6 @@ import com.genshin.lunar.common.Result;
 import com.genshin.lunar.dto.*;
 import com.genshin.lunar.service.AvatarService;
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,10 +14,11 @@ public class AvatarController {
     private final AvatarService avatarService;
 
     @GetMapping("/list")
-    public Result<List<AvatarList.AvatarBrief>> getList(@RequestParam(required = false) String name,
-                                                        @RequestParam(required = false) List<String> elements,
-                                                        @RequestParam(required = false) List<String> weaponTypes,
-                                                        @RequestParam(required = false) List<String> qualityTypes) {
+    public Result<List<AvatarList.AvatarBrief>> getList(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) List<String> elements,
+            @RequestParam(required = false) List<String> weaponTypes,
+            @RequestParam(required = false) List<String> qualityTypes) {
         return Result.ok(avatarService.getAvatarList(name, elements, weaponTypes, qualityTypes));
     }
 

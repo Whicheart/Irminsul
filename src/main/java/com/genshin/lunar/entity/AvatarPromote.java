@@ -1,11 +1,10 @@
 package com.genshin.lunar.entity;
 
+import java.util.List;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.util.List;
 
 @Data
 @Document(collection = "avatar_promote")
@@ -30,8 +29,10 @@ public class AvatarPromote {
         // 摩拉消耗、材料消耗与属性加成
         @Field("scoinCost")
         private Integer scoinCost;
+
         @Field("costItems")
         private List<CostItem> costItems;
+
         @Field("addProps")
         private List<AddProp> addProps;
     }
@@ -41,6 +42,7 @@ public class AvatarPromote {
     public static class CostItem {
         @Field("id")
         private Integer id;
+
         @Field("count")
         private Integer count;
     }
@@ -50,6 +52,7 @@ public class AvatarPromote {
     public static class AddProp {
         @Field("propType")
         private String propType;
+
         @Field("value")
         private Double value;
     }
