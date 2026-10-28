@@ -247,16 +247,9 @@ public class WeaponServiceImpl implements WeaponService {
         // ==========================================
         // 武器故事：按武器 ID 关联，每章由多行文本组成
         // ==========================================
-        List<WeaponBaseInfoDTO.Story> stories = new ArrayList<>();
         WeaponStory weaponStory = weaponStoryRepository.findById(id).orElse(null);
-        if (weaponStory != null && weaponStory.getStories() != null) {
-            for (List<String> storyLines : weaponStory.getStories()) {
-                WeaponBaseInfoDTO.Story story = new WeaponBaseInfoDTO.Story();
-                story.setStory(storyLines);
-                stories.add(story);
-            }
-        }
-        weaponBaseInfoDTO.setStories(stories);
+        weaponBaseInfoDTO.setStories(
+                weaponStory != null && weaponStory.getStories() != null ? weaponStory.getStories() : new ArrayList<>());
 
         return weaponBaseInfoDTO;
     }

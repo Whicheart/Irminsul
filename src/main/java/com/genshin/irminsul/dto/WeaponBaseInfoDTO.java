@@ -21,12 +21,7 @@ public class WeaponBaseInfoDTO {
     private List<String> affixDesc;
 
     private List<Material> materials;
-    private List<Story> stories;
-
-    @Data
-    public static class Story {
-        private List<String> story;
-    }
+    private List<List<String>> stories;
 
     @Data
     public static class Material {
