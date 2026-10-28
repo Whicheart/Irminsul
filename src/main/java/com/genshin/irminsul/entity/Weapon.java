@@ -57,10 +57,6 @@ public class Weapon {
     @Field("awakenMaterial")
     private Integer awakenMaterial;
 
-    // 物品通用属性
-    @Field("weight")
-    private Integer weight;
-
     @Data
     public static class WeaponProp {
         @Field("type")
@@ -102,5 +98,7 @@ public class Weapon {
     private Integer initialLockState;
     @Field("unRotate")
     private Boolean unRotate;
+    @Field("weight")
+    private Integer weight;
     */
 }
