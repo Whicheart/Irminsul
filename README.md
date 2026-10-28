@@ -107,7 +107,7 @@ curl 'http://localhost:8080/api/avatar/10000002/base-info'
 
 ## 数据模型
 
-默认库 `GI`，共 23 个集合。当前接口实际读取的：
+默认库 `GI`，共 29 个集合。当前接口实际读取的：
 
 | 集合                  | 用途                                                           |
 | --------------------- | -------------------------------------------------------------- |
@@ -127,6 +127,8 @@ curl 'http://localhost:8080/api/avatar/10000002/base-info'
 | `text_map_chs_medium` | 文本哈希表，`hash → 中文文本`                                  |
 
 已建模但暂未接入接口：`avatar_ability`、`avatar_fetters_level`、`avatar_level`、`avatar_trace_effect`、`attack_attenuation`、`fetter_character_card`、`material_codex`、`material_source_data`、`text_map_en_medium`。
+
+武器相关集合已建模，等待接入接口：`weapon`、`weapon_promote`、`weapon_curve`、`weapon_level`、`weapon_codex`、`equip_affix`。
 
 ## 实现约定
 
