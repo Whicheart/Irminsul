@@ -19,6 +19,6 @@ public class ReliquaryBaseInfoDTO {
         private String name;
         private String desc;
         private String containIconName;
-        private List<List<String>> stories;
+        private List<String> story;
     }
 }
