@@ -5,12 +5,15 @@ import com.genshin.irminsul.dto.ReliquaryList;
 import com.genshin.irminsul.entity.EquipAffix;
 import com.genshin.irminsul.entity.Reliquary;
 import com.genshin.irminsul.entity.ReliquarySet;
+import com.genshin.irminsul.entity.ReliquaryStory;
 import com.genshin.irminsul.repository.EquipAffixRepository;
 import com.genshin.irminsul.repository.ReliquaryRepository;
 import com.genshin.irminsul.repository.ReliquarySetRepository;
+import com.genshin.irminsul.repository.ReliquaryStoryRepository;
 import com.genshin.irminsul.service.ReliquaryService;
 import com.genshin.irminsul.util.TextMapChsUtil;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,12 +26,20 @@ import org.springframework.stereotype.Service;
 public class ReliquaryServiceImpl implements ReliquaryService {
     private final ReliquarySetRepository reliquarySetRepository;
     private final ReliquaryRepository reliquaryRepository;
+    private final ReliquaryStoryRepository reliquaryStoryRepository;
     private final EquipAffixRepository equipAffixRepository;
     private final TextMapChsUtil textMapChsUtil;
+
+    // 15000 号套装缺少 equipAffixId 与文本，列表不展示
+    private static final Integer EXCLUDED_SET_ID = 15000;
 
     @Override
     public List<ReliquaryList> getReliquaryList() {
         return reliquarySetRepository.findAll().stream()
+                .filter(set -> !EXCLUDED_SET_ID.equals(set.getId()))
+                .sorted(Comparator.comparing(
+                                ReliquarySet::getMaxRankLevel, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(ReliquarySet::getId, Comparator.reverseOrder()))
                 .map(this::toReliquaryList)
                 .collect(Collectors.toList());
     }
@@ -95,17 +106,31 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         }
         Map<Integer, Reliquary> reliquaryMap = reliquaryRepository.findAllById(set.getContainsList()).stream()
                 .collect(Collectors.toMap(Reliquary::getId, reliquary -> reliquary));
-        for (Integer reliquaryId : set.getContainsList()) {
+        ReliquaryStory story = reliquaryStoryRepository.findById(set.getId()).orElse(null);
+        List<List<String>> stories =
+                story == null || story.getStories() == null ? new ArrayList<>() : story.getStories();
+        List<Integer> containsList = set.getContainsList();
+        for (Integer reliquaryId : containsList) {
             Reliquary reliquary = reliquaryMap.get(reliquaryId);
             ReliquaryBaseInfoDTO.Contains item = new ReliquaryBaseInfoDTO.Contains();
             item.setId(reliquaryId);
             item.setName(reliquary == null ? null : textMapChsUtil.getText(reliquary.getNameTextMapHash()));
             item.setDesc(reliquary == null ? null : textMapChsUtil.getText(reliquary.getDescTextMapHash()));
             item.setContainIconName("UI_RelicIcon_" + reliquaryId);
-            item.setStories(new ArrayList<>());
+            int storyIndex = stories.size() == 1 ? 0 : getStoryIndex(reliquaryId);
+            item.setStory(storyIndex < stories.size() ? stories.get(storyIndex) : new ArrayList<>());
             contains.add(item);
         }
         return contains;
+    }
+
+    // 部件 ID 从左往右第四位数字减一，即对应套装故事中的章节下标（如 47442 -> 第 3 号故事）
+    private int getStoryIndex(Integer reliquaryId) {
+        String id = String.valueOf(reliquaryId);
+        if (id.length() < 4) {
+            return 0;
+        }
+        return Math.max(Character.getNumericValue(id.charAt(3)) - 1, 0);
     }
 
     private EquipAffix getEquipAffix(ReliquarySet set) {
