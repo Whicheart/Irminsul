@@ -3,6 +3,7 @@ package com.genshin.irminsul.controller;
 import com.genshin.irminsul.common.Result;
 import com.genshin.irminsul.dto.ReliquaryBaseInfoDTO;
 import com.genshin.irminsul.dto.ReliquaryList;
+import com.genshin.irminsul.dto.ReliquaryPropRankDTO;
 import com.genshin.irminsul.service.ReliquaryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,11 @@ public class ReliquaryController {
     @GetMapping("/list")
     public Result<List<ReliquaryList>> getList() {
         return Result.ok(reliquaryService.getReliquaryList());
+    }
+
+    @GetMapping("/prop-rank")
+    public Result<ReliquaryPropRankDTO> getPropRank() {
+        return Result.ok(reliquaryService.getReliquaryPropRank());
     }
 
     @GetMapping("/{id}/base-info")
