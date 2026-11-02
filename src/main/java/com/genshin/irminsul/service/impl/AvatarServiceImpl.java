@@ -28,8 +28,8 @@ public class AvatarServiceImpl implements AvatarService {
     private final AvatarTalentRepository avatarTalentRepository;
     private final ProudSkillRepository proudSkillRepository;
 
-    private static final Set<String> IGNORE_AVATARS = Set.of("旅行者", "奇偶·男性", "奇偶·女性");
-    private static final Set<Integer> IGNORE_SKILLS = Set.of(30506, 11076);
+    private static final Set<String> EXCLUDED_AVATAR_NAMES = Set.of("旅行者", "奇偶·男性", "奇偶·女性");
+    private static final Set<Integer> EXCLUDED_SKILL_IDS = Set.of(30506, 11076);
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(
@@ -53,7 +53,7 @@ public class AvatarServiceImpl implements AvatarService {
         for (Avatar avatar : avatars) {
             String currentName = textMapChsUtil.getText(avatar.getNameTextMapHash());
             if (avatar.getId() < 10000002 || avatar.getId() > 10000899) continue;
-            if (IGNORE_AVATARS.contains(currentName)) continue;
+            if (EXCLUDED_AVATAR_NAMES.contains(currentName)) continue;
 
             AvatarList.AvatarBrief brief = new AvatarList.AvatarBrief();
 
@@ -577,7 +577,7 @@ public class AvatarServiceImpl implements AvatarService {
                     // 跳过 ID 大于五位数的技能
                     if (skillId >= 100000) continue;
                     // 跳过部分特殊技能
-                    if (IGNORE_SKILLS.contains(skillId)) continue;
+                    if (EXCLUDED_SKILL_IDS.contains(skillId)) continue;
 
                     skillIds.add(skillId);
                 }
