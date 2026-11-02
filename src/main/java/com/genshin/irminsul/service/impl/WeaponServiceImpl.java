@@ -34,6 +34,10 @@ public class WeaponServiceImpl implements WeaponService {
     private final MaterialRepository materialRepository;
     private final TextMapChsUtil textMapChsUtil;
 
+    // 缺少图鉴排序等数据的武器，不进入列表
+    private static final Set<Integer> EXCLUDED_WEAPON_IDS =
+            Set.of(11419, 11420, 11421, 11429, 12304, 13304, 14306, 15306);
+
     @Override
     public List<WeaponList.WeaponBrief> getWeaponList(String name, List<String> weaponTypes, List<Integer> ranks) {
         List<Weapon> weapons = weaponRepository.findAll();
@@ -47,6 +51,7 @@ public class WeaponServiceImpl implements WeaponService {
             String weaponName = textMapChsUtil.getText(weapon.getNameTextMapHash());
             // 测试武器与未上线占位武器没有正式名称，不进入列表
             if (weaponName == null || weaponName.startsWith("(test)")) continue;
+            if (EXCLUDED_WEAPON_IDS.contains(weapon.getId())) continue;
 
             if (name != null && !name.isEmpty() && !weaponName.contains(name)) continue;
             if (weaponTypes != null && !weaponTypes.isEmpty() && !weaponTypes.contains(weapon.getWeaponType()))
