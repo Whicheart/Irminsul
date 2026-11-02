@@ -271,9 +271,9 @@ public class WeaponServiceImpl implements WeaponService {
 
     private String toGachaIcon(String icon) {
         if (icon == null) return null;
-        if (icon.startsWith("UI_EquipIcon_")) {
-            return "UI_Gacha_EquipIcon_" + icon.substring("UI_EquipIcon_".length());
-        }
+        //        if (icon.startsWith("UI_EquipIcon_")) {
+        //            return "UI_Gacha_EquipIcon_" + icon.substring("UI_EquipIcon_".length());
+        //        }
         return icon + "_Gacha";
     }
 
