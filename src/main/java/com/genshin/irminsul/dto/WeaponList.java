@@ -11,7 +11,8 @@ public class WeaponList {
     public static class WeaponBrief {
         private Integer id;
         private Integer sortId;
-        private String GachaIconName;
+        private String GachaCardName;
+        private String iconName;
         private String name;
         private Integer rank;
         private String weaponType;
