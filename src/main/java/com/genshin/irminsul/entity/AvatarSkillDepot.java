@@ -23,8 +23,8 @@ public class AvatarSkillDepot {
     private Integer energySkill;
 
     // 固有天赋组
-    @Field("proudSkillGroups")
-    private List<ProudSkillGroup> proudSkillGroups;
+    @Field("inherentProudSkillOpens")
+    private List<ProudSkillGroup> inherentProudSkillOpens;
 
     @Field("specialProudSkillGroups")
     private List<SpecialProudSkillGroup> specialProudSkillGroups;
