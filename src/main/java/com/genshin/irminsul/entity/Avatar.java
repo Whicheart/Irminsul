@@ -95,14 +95,14 @@ public class Avatar {
 
     /*
     // === 某种加成属性但字段是混淆的 ===
-    @Field("OPABFGCNNHB")
-    private String OPABFGCNNHB; // 比如 "FIGHT_PROP_ELEMENT_MASTERY"
+    @Field("CBADONBPEKC")
+    private String CBADONBPEKC; // 比如 "FIGHT_PROP_ELEMENT_MASTERY"
 
-    @Field("JEFOBMDHIFJ")
-    private String JEFOBMDHIFJ; // 比如 "FIGHT_PROP_CRITICAL"
+    @Field("BEODCKHANHE")
+    private String BEODCKHANHE; // 比如 "FIGHT_PROP_CRITICAL"
 
-    @Field("GOEONNEACMM")
-    private String GOEONNEACMM; // 比如 "FIGHT_PROP_CRITICAL_HURT"
+    @Field("CBEGCDFMBDF")
+    private String CBEGCDFMBDF; // 比如 "FIGHT_PROP_CRITICAL_HURT"
 
     // === 某种 ID 但字段是混淆的 ===
     @Field("HPOFBCBCNAE")
