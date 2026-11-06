@@ -17,7 +17,7 @@ public class AvatarSkillDTO {
         private String desc;
         private String extraDesc;
         private String descExtra;
-        private String skillIconName;
+        private String iconName;
         private List<CombatSkillData> combatSkillDataList;
     }
 
@@ -28,14 +28,7 @@ public class AvatarSkillDTO {
         private String desc;
         private String descExtra;
         private String loreDesc;
-        private String skillIconName;
-    }
-
-    @Data
-    public static class CombatSkillData {
-        private Integer level;
-        private List<String> paramDescList;
-        private List<Double> paramList;
+        private String iconName;
     }
 
     @Data
@@ -45,6 +38,13 @@ public class AvatarSkillDTO {
         private String desc;
         private String descExtra;
         private String loreDesc;
-        private String skillIconName;
+        private String iconName;
+    }
+
+    @Data
+    public static class CombatSkillData {
+        private Integer level;
+        private List<String> paramDescList;
+        private List<Double> paramList;
     }
 }

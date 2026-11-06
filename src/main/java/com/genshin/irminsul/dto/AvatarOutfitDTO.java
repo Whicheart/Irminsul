@@ -15,5 +15,6 @@ public class AvatarOutfitDTO {
         private String desc;
         private Integer quality;
         private Integer indexID;
+        private String imageName;
     }
 }

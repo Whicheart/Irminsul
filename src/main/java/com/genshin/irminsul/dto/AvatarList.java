@@ -12,6 +12,7 @@ public class AvatarList {
         private Integer id;
         private Integer sortId;
         private String GachaIconName;
+        private String iconName;
         private String name;
         private String qualityType;
         private String element;
