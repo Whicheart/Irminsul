@@ -30,6 +30,7 @@ public class AvatarServiceImpl implements AvatarService {
 
     private static final Set<String> EXCLUDED_AVATAR_NAMES = Set.of("旅行者", "奇偶·男性", "奇偶·女性");
     private static final Set<Integer> EXCLUDED_SKILL_IDS = Set.of(30506, 11076);
+    private static final Set<Integer> EXCLUDED_PASSIVE_SKILL_IDS = Set.of(522301);
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(
@@ -61,9 +62,8 @@ public class AvatarServiceImpl implements AvatarService {
             brief.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
             brief.setQualityType(avatar.getQualityType());
             brief.setWeaponType(avatar.getWeaponType());
-            brief.setGachaIconName(avatar.getIconName() + "_Gacha");
-            //            brief.setQualityType(translateQuality(avatar.getQualityType()));
-            //            brief.setWeaponType(translateWeapon(avatar.getWeaponType()));
+            brief.setGachaIconName(toGachaIconName(avatar.getIconName()));
+            brief.setIconName(avatar.getIconName());
 
             AvatarCodex codex = codexMap.get(avatar.getId());
             if (codex != null) {
@@ -135,6 +135,7 @@ public class AvatarServiceImpl implements AvatarService {
         avatarBaseInfoDTO.setQualityType(translateQuality(avatar.getQualityType()));
         avatarBaseInfoDTO.setWeaponType(translateWeapon(avatar.getWeaponType()));
         avatarBaseInfoDTO.setReleaseTime(avatarCodex.getBeginTime());
+        avatarBaseInfoDTO.setAssocType(fetterInfo.getAvatarAssocType());
 
         // ==========================================
         // 嵌套对象组装（阵营、生日、命座、力量、元素、CV）
@@ -156,11 +157,11 @@ public class AvatarServiceImpl implements AvatarService {
         constellation.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarConstellationAfterTextMapHash()));
         avatarBaseInfoDTO.setConstellation(constellation);
 
-        AvatarBaseInfoDTO.Power power = new AvatarBaseInfoDTO.Power();
-        power.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarPowerBeforTextMapHash()));
-        power.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarPowerAfterTextMapHash()));
-        if (power.getBefor() == null) power.setBefor(defaultPower);
-        avatarBaseInfoDTO.setPower(power);
+        AvatarBaseInfoDTO.Vision vision = new AvatarBaseInfoDTO.Vision();
+        vision.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarPowerBeforTextMapHash()));
+        vision.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarPowerAfterTextMapHash()));
+        if (vision.getBefor() == null) vision.setBefor(defaultPower);
+        avatarBaseInfoDTO.setVision(vision);
 
         AvatarBaseInfoDTO.Element element = new AvatarBaseInfoDTO.Element();
         element.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarVisionBeforTextMapHash()));
@@ -279,11 +280,16 @@ public class AvatarServiceImpl implements AvatarService {
                 }
             }
         }
+
         Map<Integer, String> materialNameMap = new HashMap<>();
         if (!materialIds.isEmpty()) {
             materialRepository
                     .findAllById(materialIds)
                     .forEach(m -> materialNameMap.put(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
+        }
+        Map<Integer, String> materialIconNameMap = new HashMap<>();
+        if (!materialIds.isEmpty()) {
+            materialRepository.findAllById(materialIds).forEach(m -> materialIconNameMap.put(m.getId(), m.getIcon()));
         }
 
         List<AvatarBaseInfoDTO.LevelUpMaterial> levelUpMaterials = new ArrayList<>();
@@ -303,6 +309,7 @@ public class AvatarServiceImpl implements AvatarService {
                         costItem.setId(item.getId());
                         costItem.setName(materialNameMap.get(item.getId()));
                         costItem.setCount(item.getCount());
+                        costItem.setIconName(materialIconNameMap.get(item.getId()));
                         costItems.add(costItem);
                     }
                 }
@@ -361,6 +368,7 @@ public class AvatarServiceImpl implements AvatarService {
                         costItem.setId(item.getId());
                         costItem.setName(materialNameMap.get(item.getId()));
                         costItem.setCount(item.getCount());
+                        costItem.setIconName(materialIconNameMap.get(item.getId()));
                         costItems.add(costItem);
                     }
                 }
@@ -377,7 +385,7 @@ public class AvatarServiceImpl implements AvatarService {
         material.setTalentUpMaterial(talentUpMaterials);
         avatarBaseInfoDTO.setMaterials(List.of(material));
 
-        avatarBaseInfoDTO.setSplashIconName(avatar.getIconName() + "_Splash");
+        avatarBaseInfoDTO.setGachaImageName(toGachaImageName(avatar.getIconName()));
 
         return avatarBaseInfoDTO;
     }
@@ -396,6 +404,7 @@ public class AvatarServiceImpl implements AvatarService {
             outfit.setDesc(textMapChsUtil.getText(avatarCostume.getDescTextMapHash()));
             outfit.setQuality(avatarCostume.getQuality());
             outfit.setIndexID(avatarCostume.getIndexID());
+            outfit.setImageName(toCustomImageName(avatarCostume.getFrontIconName()));
             outfits.add(outfit);
         }
 
@@ -511,8 +520,7 @@ public class AvatarServiceImpl implements AvatarService {
                 avatarTalentRepository.findByIdIn(talentIds).forEach(t -> talentMap.put(t.getId(), t));
             }
 
-            for (int i = 0; i < talentIds.size(); i++) {
-                Integer talentId = talentIds.get(i);
+            for (Integer talentId : talentIds) {
                 AvatarTalent avatarTalent = talentMap.get(talentId);
                 if (avatarTalent == null) continue;
 
@@ -521,9 +529,7 @@ public class AvatarServiceImpl implements AvatarService {
                 constellation.setName(textMapChsUtil.getText(avatarTalent.getNameTextMapHash()));
                 constellation.setDesc(textMapChsUtil.getText(avatarTalent.getDescTextMapHash()));
                 constellation.setDescExtra(textMapChsUtil.getText(avatarTalent.getDescExtraTextMapHash()));
-
-                // 后缀数字为 i + 1 (即 1~6)
-                constellation.setConstellationIconName(avatar.getIconName() + "_Constellation_" + (i + 1));
+                constellation.setIconName(avatarTalent.getIcon());
 
                 constellations.add(constellation);
             }
@@ -541,7 +547,6 @@ public class AvatarServiceImpl implements AvatarService {
         List<AvatarSkillDTO.CombatSkill> combatSkills = new ArrayList<>();
         List<AvatarSkillDTO.PassiveSkill> passiveSkills = new ArrayList<>();
         List<AvatarSkillDTO.SpecialProudSkill> specialProudSkills = new ArrayList<>();
-        int passiveIndex = 1;
 
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) return null;
@@ -550,23 +555,8 @@ public class AvatarServiceImpl implements AvatarService {
                 avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
         if (avatarSkillDepot != null) {
 
-            Map<Integer, String> skillIconSuffixMap = new HashMap<>();
-            if (avatarSkillDepot.getSkills() != null) {
-                List<Integer> depotSkills = avatarSkillDepot.getSkills();
-                // 索引 0 为普通攻击
-                if (depotSkills.size() > 0 && depotSkills.get(0) != null && depotSkills.get(0) != 0) {
-                    skillIconSuffixMap.put(depotSkills.get(0), "NormalAttack");
-                }
-                // 索引 1 为元素战技
-                if (depotSkills.size() > 1 && depotSkills.get(1) != null && depotSkills.get(1) != 0) {
-                    skillIconSuffixMap.put(depotSkills.get(1), "ElementSkill");
-                }
-            }
             // energySkill 为元素爆发
             Integer energySkillId = avatarSkillDepot.getEnergySkill();
-            if (energySkillId != null && energySkillId != 0) {
-                skillIconSuffixMap.put(energySkillId, "ElementBurst");
-            }
 
             // 主动技能：skills 里是普攻、战技及霰步这类附属技能，元素爆发单独在 energySkill 里
             List<Integer> skillIds = new ArrayList<>();
@@ -597,15 +587,7 @@ public class AvatarServiceImpl implements AvatarService {
                 combatSkill.setDesc(textMapChsUtil.getText(avatarSkill.getDescTextMapHash()));
                 combatSkill.setExtraDesc(textMapChsUtil.getText(avatarSkill.getExtraDescTextMapHash()));
                 combatSkill.setDescExtra(textMapChsUtil.getText(avatarSkill.getDescExtraTextMapHash()));
-
-                // === 修改：判断当前技能类型并拼接对应图标 ===
-                String suffix = skillIconSuffixMap.get(skillId);
-                if (suffix != null) {
-                    combatSkill.setSkillIconName(avatar.getIconName() + "_Talent_" + suffix);
-                } else {
-                    // 兜底：如果是霰步等没在 map 里的特殊技能，保留原本的 skillIcon
-                    combatSkill.setSkillIconName(avatarSkill.getSkillIcon());
-                }
+                combatSkill.setIconName(avatarSkill.getSkillIcon());
 
                 // 技能数值按天赋组逐级展开，组内等级 1–15 都保留
                 List<AvatarSkillDTO.CombatSkillData> combatSkillDataList = new ArrayList<>();
@@ -630,6 +612,7 @@ public class AvatarServiceImpl implements AvatarService {
                             proudSkillGroup.getProudSkillGroupId());
                     for (ProudSkill proudSkill : proudSkills) {
                         if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
+                        if (EXCLUDED_PASSIVE_SKILL_IDS.contains(proudSkill.getId())) continue;
 
                         AvatarSkillDTO.PassiveSkill passiveSkill = new AvatarSkillDTO.PassiveSkill();
                         passiveSkill.setId(proudSkill.getId());
@@ -637,9 +620,7 @@ public class AvatarServiceImpl implements AvatarService {
                         passiveSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
                         passiveSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
                         passiveSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
-
-                        passiveSkill.setSkillIconName(avatar.getIconName() + "_Passive_" + passiveIndex);
-                        passiveIndex++;
+                        passiveSkill.setIconName(proudSkill.getIcon());
 
                         passiveSkills.add(passiveSkill);
                         break;
@@ -664,9 +645,7 @@ public class AvatarServiceImpl implements AvatarService {
                         specialProudSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
                         specialProudSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
                         specialProudSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
-
-                        specialProudSkill.setSkillIconName(avatar.getIconName() + "_Passive_" + passiveIndex);
-                        passiveIndex++;
+                        specialProudSkill.setIconName(proudSkill.getIcon());
 
                         specialProudSkills.add(specialProudSkill);
                         break;
@@ -681,6 +660,21 @@ public class AvatarServiceImpl implements AvatarService {
         avatarSkillDTO.setSpecialProudSkills(specialProudSkills);
 
         return avatarSkillDTO;
+    }
+
+    private String toGachaIconName(String icon) {
+        if (icon == null) return null;
+        return "UI_Gacha_AvatarIcon_" + icon.substring("UI_AvatarIcon_".length());
+    }
+
+    private String toGachaImageName(String icon) {
+        if (icon == null) return null;
+        return "UI_Gacha_AvatarImg_" + icon.substring("UI_AvatarIcon_".length());
+    }
+
+    private String toCustomImageName(String name) {
+        if (name == null) return null;
+        return "UI_Costume_" + name.substring("UI_AvatarIcon_".length());
     }
 
     private AvatarSkillDTO.CombatSkillData buildCombatSkillData(ProudSkill proudSkill) {
@@ -726,15 +720,15 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     private String translateElement(String element) {
-        if (element == null) return "UNKNOWN";
+        if (element == null) return "Unknown";
         return switch (element) {
-            case "火" -> "PYRO";
-            case "水" -> "HYDRO";
-            case "冰" -> "CRYO";
-            case "雷" -> "ELECTRO";
-            case "风" -> "ANEMO";
-            case "岩" -> "GEO";
-            case "草" -> "DENDRO";
+            case "火" -> "Fire";
+            case "水" -> "Water";
+            case "冰" -> "Ice";
+            case "雷" -> "Electric";
+            case "风" -> "Wind";
+            case "岩" -> "Rock";
+            case "草" -> "Grass";
             default -> element;
         };
     }
