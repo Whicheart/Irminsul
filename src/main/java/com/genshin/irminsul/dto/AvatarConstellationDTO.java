@@ -14,7 +14,7 @@ public class AvatarConstellationDTO {
         private String name;
         private String desc;
         private String descExtra;
-        private String constellationIconName;
+        private String iconName;
         //        private List<Double> paramList;
         //        private List<AddProp> addProps;
     }

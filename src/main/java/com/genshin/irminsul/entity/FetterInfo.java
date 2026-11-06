@@ -22,6 +22,9 @@ public class FetterInfo {
     @Field("avatarDetailTextMapHash")
     private String avatarDetailTextMapHash;
 
+    @Field("avatarAssocType")
+    private String avatarAssocType;
+
     // 权能、神之眼、所属、命之座的"前·后"两版文本
     @Field("avatarPowerBeforTextMapHash")
     private String avatarPowerBeforTextMapHash;

@@ -12,11 +12,12 @@ public class AvatarBaseInfoDTO {
     private String qualityType;
     private String weaponType;
     private String releaseTime;
-    private List<String> affiliation;
+    private String assocType;
 
+    private List<String> affiliation;
     private Birth birth;
     private Constellation constellation;
-    private Power power;
+    private Vision vision;
     private Element element;
     private Cv cv;
 
@@ -29,7 +30,7 @@ public class AvatarBaseInfoDTO {
 
     private List<Material> materials;
 
-    private String splashIconName;
+    private String gachaImageName;
 
     @Data
     public static class Birth {
@@ -44,7 +45,7 @@ public class AvatarBaseInfoDTO {
     }
 
     @Data
-    public static class Power {
+    public static class Vision {
         private String befor;
         private String after;
     }
@@ -89,5 +90,6 @@ public class AvatarBaseInfoDTO {
         private Integer id;
         private String name;
         private Integer count;
+        private String iconName;
     }
 }
