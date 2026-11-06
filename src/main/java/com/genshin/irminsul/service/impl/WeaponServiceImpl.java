@@ -65,7 +65,8 @@ public class WeaponServiceImpl implements WeaponService {
             brief.setSortId(codex != null ? codex.getSortOrder() : null);
             brief.setRank(weapon.getRankLevel());
             brief.setWeaponType(weapon.getWeaponType());
-            brief.setGachaIconName(toGachaIcon(weapon.getIcon()));
+            brief.setGachaCardName(toGachaCardName(weapon.getIcon()));
+            brief.setIconName(weapon.getIcon());
             result.add(brief);
         }
 
@@ -183,12 +184,19 @@ public class WeaponServiceImpl implements WeaponService {
                 }
             }
         }
+
         Map<Integer, String> materialNameMap = new HashMap<>();
         if (!materialIds.isEmpty()) {
             materialRepository
                     .findAllById(materialIds)
                     .forEach(material -> materialNameMap.put(
                             material.getId(), textMapChsUtil.getText(material.getNameTextMapHash())));
+        }
+        Map<Integer, String> materialIconNameMap = new HashMap<>();
+        if (!materialIds.isEmpty()) {
+            materialRepository
+                    .findAllById(materialIds)
+                    .forEach(material -> materialIconNameMap.put(material.getId(), material.getIcon()));
         }
 
         List<WeaponBaseInfoDTO.Material> materials = new ArrayList<>();
@@ -208,6 +216,7 @@ public class WeaponServiceImpl implements WeaponService {
                         WeaponBaseInfoDTO.CostItem costItem = new WeaponBaseInfoDTO.CostItem();
                         costItem.setId(item.getId());
                         costItem.setName(materialNameMap.get(item.getId()));
+                        costItem.setIconName(materialIconNameMap.get(item.getId()));
                         costItem.setCount(item.getCount());
                         costItems.add(costItem);
                     }
@@ -269,12 +278,9 @@ public class WeaponServiceImpl implements WeaponService {
         return 0;
     }
 
-    private String toGachaIcon(String icon) {
+    private String toGachaCardName(String icon) {
         if (icon == null) return null;
-        //        if (icon.startsWith("UI_EquipIcon_")) {
-        //            return "UI_Gacha_EquipIcon_" + icon.substring("UI_EquipIcon_".length());
-        //        }
-        return icon + "_Gacha";
+        return "UI_Gacha_EquipIcon_" + icon.substring("UI_EquipIcon_".length());
     }
 
     private String translateWeapon(String weapon) {
