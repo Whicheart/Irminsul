@@ -604,8 +604,8 @@ public class AvatarServiceImpl implements AvatarService {
             }
 
             // 固有天赋：每个天赋组只取 1 级那条，组里其余等级是升级节点
-            if (avatarSkillDepot.getProudSkillGroups() != null) {
-                for (AvatarSkillDepot.ProudSkillGroup proudSkillGroup : avatarSkillDepot.getProudSkillGroups()) {
+            if (avatarSkillDepot.getInherentProudSkillOpens() != null) {
+                for (AvatarSkillDepot.ProudSkillGroup proudSkillGroup : avatarSkillDepot.getInherentProudSkillOpens()) {
                     if (proudSkillGroup == null || proudSkillGroup.getProudSkillGroupId() == null) continue;
 
                     List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
