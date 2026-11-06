@@ -17,12 +17,7 @@ import com.genshin.irminsul.repository.ReliquarySetRepository;
 import com.genshin.irminsul.repository.ReliquaryStoryRepository;
 import com.genshin.irminsul.service.ReliquaryService;
 import com.genshin.irminsul.util.TextMapChsUtil;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +34,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
     private final TextMapChsUtil textMapChsUtil;
 
     // 15000 号套装缺少 equipAffixId 与文本，列表不展示
-    private static final Integer EXCLUDED_SET_ID = 15000;
+    private static final Set<Integer> EXCLUDED_SET_IDS = Set.of(15000, 15004, 15012);
 
     // 火元素抗性不计入主属性
     private static final String FIRE_SUB_HURT = "FIGHT_PROP_FIRE_SUB_HURT";
@@ -47,7 +42,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
     @Override
     public List<ReliquaryList> getReliquaryList() {
         return reliquarySetRepository.findAll().stream()
-                .filter(set -> !EXCLUDED_SET_ID.equals(set.getId()))
+                .filter(set -> !EXCLUDED_SET_IDS.contains(set.getId()))
                 .sorted(Comparator.comparing(
                                 ReliquarySet::getMaxRankLevel, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(ReliquarySet::getId, Comparator.reverseOrder()))
@@ -66,7 +61,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         detail.setName(getSetName(set));
         detail.setSetAffixNum(set.getSetNeedNum());
         detail.setSetAffixDesc(getSetAffixDesc(set));
-        detail.setSetIconName(buildSetIconName(set));
+        detail.setSetIconName(set.getSetIcon());
         detail.setMaxRankLevel(set.getMaxRankLevel());
         detail.setContains(buildContains(set));
         return detail;
@@ -147,7 +142,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         ReliquaryList brief = new ReliquaryList();
         brief.setSetId(set.getId());
         brief.setName(getSetName(set));
-        brief.setSetIconName(buildSetIconName(set));
+        brief.setSetIconName(set.getSetIcon());
         brief.setMaxRankLevel(set.getMaxRankLevel());
         return brief;
     }
@@ -173,14 +168,6 @@ public class ReliquaryServiceImpl implements ReliquaryService {
                 .collect(Collectors.toList());
     }
 
-    // 套装图标名固定为 UI_RelicIcon_<套装首个圣遗物 ID>
-    private String buildSetIconName(ReliquarySet set) {
-        if (set.getContainsList() == null || set.getContainsList().isEmpty()) {
-            return null;
-        }
-        return "UI_RelicIcon_" + set.getContainsList().get(0);
-    }
-
     private List<ReliquaryBaseInfoDTO.Contains> buildContains(ReliquarySet set) {
         List<ReliquaryBaseInfoDTO.Contains> contains = new ArrayList<>();
         if (set.getContainsList() == null || set.getContainsList().isEmpty()) {
@@ -198,7 +185,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
             item.setId(reliquaryId);
             item.setName(reliquary == null ? null : textMapChsUtil.getText(reliquary.getNameTextMapHash()));
             item.setDesc(reliquary == null ? null : textMapChsUtil.getText(reliquary.getDescTextMapHash()));
-            item.setContainIconName("UI_RelicIcon_" + reliquaryId);
+            item.setIconName(reliquary == null ? null : reliquary.getIcon());
             int storyIndex = stories.size() == 1 ? 0 : getStoryIndex(reliquaryId);
             item.setStory(storyIndex < stories.size() ? stories.get(storyIndex) : new ArrayList<>());
             contains.add(item);
