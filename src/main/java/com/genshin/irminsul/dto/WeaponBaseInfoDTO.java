@@ -36,5 +36,6 @@ public class WeaponBaseInfoDTO {
         private Integer id;
         private String name;
         private Integer count;
+        private String iconName;
     }
 }
