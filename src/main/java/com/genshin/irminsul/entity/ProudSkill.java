@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "proud_skill")
 public class ProudSkill {
+
     @Id
     private Integer id;
 
@@ -18,8 +19,17 @@ public class ProudSkill {
     @Field("level")
     private Integer level;
 
+    @Field("breakLevel")
+    private Integer breakLevel;
+
     @Field("proudSkillType")
     private Integer proudSkillType;
+
+    @Field("displayType")
+    private String displayType;
+
+    @Field("effectiveForTeam")
+    private Integer effectiveForTeam;
 
     @Field("icon")
     private String icon;
@@ -36,6 +46,9 @@ public class ProudSkill {
     @Field("loreDescTextMapHash")
     private String loreDescTextMapHash;
 
+    @Field("unlockDescTextMapHash")
+    private String unlockDescTextMapHash;
+
     @Field("paramDescList")
     private List<String> paramDescList;
 
@@ -51,8 +64,24 @@ public class ProudSkill {
     @Field("addProps")
     private List<AddProp> addProps;
 
+    @Field("lifeEffectType")
+    private String lifeEffectType;
+
+    @Field("lifeEffectParams")
+    private List<String> lifeEffectParams;
+
+    @Field("isHideLifeProudSkill")
+    private Boolean isHideLifeProudSkill;
+
+    @Field("filterConds")
+    private List<String> filterConds;
+
+    @Field("openConfig")
+    private String openConfig;
+
     @Data
     public static class CostItem {
+
         @Field("id")
         private Integer id;
 
@@ -62,38 +91,11 @@ public class ProudSkill {
 
     @Data
     public static class AddProp {
+
         @Field("propType")
         private String propType;
 
         @Field("value")
         private Double value;
     }
-
-    /*
-    // === 不知道有啥用的字段 ===
-    @Field("unlockDescTextMapHash")
-    private String unlockDescTextMapHash;
-    @Field("breakLevel")
-    private Integer breakLevel;
-    @Field("lifeEffectType")
-    private String lifeEffectType;
-    @Field("lifeEffectParams")
-    private List<String> lifeEffectParams;
-    @Field("isHideLifeProudSkill")
-    private Boolean isHideLifeProudSkill;
-    @Field("filterConds")
-    private List<String> filterConds;
-    @Field("openConfig")
-    private String openConfig;
-
-    // === 不知道是啥东西的混淆字段 ===
-    @Field("CMILJGJDNAC")
-    private String CMILJGJDNAC;
-    @Field("KHENPLCCPDP")
-    private List<Integer> KHENPLCCPDP;
-    @Field("ACFMCHPBDMG")
-    private List<Integer> ACFMCHPBDMG;
-    @Field("INIMKGCALEE")
-    private Integer INIMKGCALEE;
-     */
 }

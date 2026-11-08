@@ -5,27 +5,27 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.List;
+
 @Data
 @Document(collection = "fetter_info")
 public class FetterInfo {
+
     @Id
     private Integer id;
 
-    // 好感条目 ID
     @Field("fetterId")
     private Integer fetterId;
 
-    // 称号与简介的文本哈希
+    @Field("avatarAssocType")
+    private String avatarAssocType;
+
     @Field("avatarTitleTextMapHash")
     private String avatarTitleTextMapHash;
 
     @Field("avatarDetailTextMapHash")
     private String avatarDetailTextMapHash;
 
-    @Field("avatarAssocType")
-    private String avatarAssocType;
-
-    // 权能、神之眼、所属、命之座的"前·后"两版文本
     @Field("avatarPowerBeforTextMapHash")
     private String avatarPowerBeforTextMapHash;
 
@@ -50,14 +50,12 @@ public class FetterInfo {
     @Field("avatarConstellationAfterTextMapHash")
     private String avatarConstellationAfterTextMapHash;
 
-    // 生日（月、日）
     @Field("infoBirthMonth")
     private Integer infoBirthMonth;
 
     @Field("infoBirthDay")
     private Integer infoBirthDay;
 
-    // 四语配音名
     @Field("cvChineseTextMapHash")
     private String cvChineseTextMapHash;
 
@@ -69,4 +67,17 @@ public class FetterInfo {
 
     @Field("cvKoreanTextMapHash")
     private String cvKoreanTextMapHash;
+
+    @Field("finishConds")
+    private List<FinishCond> finishConds;
+
+    @Data
+    public static class FinishCond {
+
+        @Field("condType")
+        private String condType;
+
+        @Field("paramList")
+        private List<Integer> paramList;
+    }
 }

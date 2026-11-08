@@ -9,27 +9,53 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "fetters")
 public class Fetters {
+
     @Id
     private String id;
 
-    // 所属角色与语音编号
     @Field("avatarId")
     private Integer avatarId;
 
     @Field("fetterId")
     private Integer fetterId;
 
-    // 1=日常语音，2=战斗语音
     @Field("type")
     private Integer type;
 
-    // 标题、文本与提示哈希
+    @Field("isHiden")
+    private Boolean isHiden;
+
     @Field("voiceTitleTextMapHash")
     private String voiceTitleTextMapHash;
 
     @Field("voiceFileTextTextMapHash")
     private String voiceFileTextTextMapHash;
 
+    @Field("voiceTitleLockedTextMapHash")
+    private String voiceTitleLockedTextMapHash;
+
     @Field("tips")
     private List<String> tips;
+
+    @Field("voiceFile")
+    private String voiceFile;
+
+    @Field("openConds")
+    private List<OpenCond> openConds;
+
+    @Field("hideCostumeList")
+    private List<Integer> hideCostumeList;
+
+    @Field("showCostumeList")
+    private List<Integer> showCostumeList;
+
+    @Data
+    public static class OpenCond {
+
+        @Field("condType")
+        private String condType;
+
+        @Field("paramList")
+        private List<Integer> paramList;
+    }
 }

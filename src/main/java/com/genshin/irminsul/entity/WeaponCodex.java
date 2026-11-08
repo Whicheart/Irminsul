@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "weapon_codex")
 public class WeaponCodex {
+
     @Id
     private Integer id;
 

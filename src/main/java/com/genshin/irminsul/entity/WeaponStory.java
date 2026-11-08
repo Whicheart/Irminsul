@@ -9,10 +9,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "weapon_story")
 public class WeaponStory {
+
     @Id
     private Integer id;
 
-    // 每章故事由多行文本组成
     @Field("stories")
     private List<List<String>> stories;
 }
