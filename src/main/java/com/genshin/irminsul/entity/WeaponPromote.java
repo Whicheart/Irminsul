@@ -9,15 +9,19 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "weapon_promote")
 public class WeaponPromote {
+
     @Id
     private Integer id;
 
-    // 各突破等级
     @Field("levels")
-    private List<PromoteLevel> levels;
+    private List<Level> levels;
+
+    @Field("requiredPlayerLevel")
+    private Integer requiredPlayerLevel;
 
     @Data
-    public static class PromoteLevel {
+    public static class Level {
+
         @Field("promoteLevel")
         private Integer promoteLevel;
 
@@ -36,6 +40,7 @@ public class WeaponPromote {
 
     @Data
     public static class CostItem {
+
         @Field("id")
         private Integer id;
 
@@ -45,16 +50,11 @@ public class WeaponPromote {
 
     @Data
     public static class AddProp {
+
         @Field("propType")
         private String propType;
 
         @Field("value")
         private Double value;
     }
-
-    /*
-    // === 应该用不到 ===
-    @Field("requiredPlayerLevel")
-    private Integer requiredPlayerLevel;
-     */
 }

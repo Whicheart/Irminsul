@@ -7,8 +7,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
-@Document(collection = "reliquary_story")
+@Document(collection = "relic_story")
 public class ReliquaryStory {
+
     @Id
     private Integer id;
 

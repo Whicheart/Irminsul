@@ -8,10 +8,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "reliquary_codex")
 public class ReliquaryCodex {
+
     @Id
     private Integer id;
 
-    // 套装与图鉴排序
     @Field("suitId")
     private Integer suitId;
 
@@ -21,7 +21,6 @@ public class ReliquaryCodex {
     @Field("level")
     private Integer level;
 
-    // 五个部位对应的圣遗物 ID
     @Field("flowerId")
     private Integer flowerId;
 

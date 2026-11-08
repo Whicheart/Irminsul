@@ -9,17 +9,16 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "fetter_story")
 public class FetterStory {
+
     @Id
     private String id;
 
-    // 所属角色与故事编号
     @Field("avatarId")
     private Integer avatarId;
 
     @Field("fetterId")
     private Integer fetterId;
 
-    // 标题与正文（含另一版）
     @Field("storyTitleTextMapHash")
     private String storyTitleTextMapHash;
 
@@ -32,7 +31,32 @@ public class FetterStory {
     @Field("storyContext2TextMapHash")
     private String storyContext2TextMapHash;
 
-    // 提示哈希
     @Field("tips")
     private List<String> tips;
+
+    @Field("finishConds")
+    private List<FinishCond> finishConds;
+
+    @Field("openConds")
+    private List<OpenCond> openConds;
+
+    @Data
+    public static class FinishCond {
+
+        @Field("condType")
+        private String condType;
+
+        @Field("paramList")
+        private List<Integer> paramList;
+    }
+
+    @Data
+    public static class OpenCond {
+
+        @Field("condType")
+        private String condType;
+
+        @Field("paramList")
+        private List<Integer> paramList;
+    }
 }

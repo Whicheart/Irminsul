@@ -8,28 +8,28 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "material_codex")
 public class MaterialCodex {
+
     @Id
     private Integer id;
 
-    // 对应的物品 ID
     @Field("materialId")
     private Integer materialId;
 
-    // 名称与描述的文本哈希
+    @Field("type")
+    private String type;
+
+    @Field("sortOrder")
+    private Integer sortOrder;
+
+    @Field("icon")
+    private String icon;
+
     @Field("nameTextMapHash")
     private String nameTextMapHash;
 
     @Field("descTextMapHash")
     private String descTextMapHash;
 
-    // 排序与类型
-    @Field("sortOrder")
-    private Integer sortOrder;
-
-    @Field("type")
-    private String type;
-
-    // 任务替换用的名称与描述
     @Field("questReplaceName1TextMapHash")
     private String questReplaceName1TextMapHash;
 
@@ -41,4 +41,13 @@ public class MaterialCodex {
 
     @Field("questReplaceDesc2TextMapHash")
     private String questReplaceDesc2TextMapHash;
+
+    @Field("questID1")
+    private Integer questID1;
+
+    @Field("isDisuse")
+    private Boolean isDisuse;
+
+    @Field("showOnlyUnlocked")
+    private Boolean showOnlyUnlocked;
 }

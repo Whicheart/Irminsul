@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "avatar_skill")
 public class AvatarSkill {
+
     @Id
     private Integer id;
 
@@ -57,6 +58,9 @@ public class AvatarSkill {
     @Field("specialEnergyMax")
     private Double specialEnergyMax;
 
+    @Field("maxChargeNum")
+    private Integer maxChargeNum;
+
     @Field("lockShape")
     private String lockShape;
 
@@ -66,50 +70,42 @@ public class AvatarSkill {
     @Field("isAttackCameraLock")
     private Boolean isAttackCameraLock;
 
-    /*
-    // === 不一定有用 和 不知道用来干嘛 和 或许有用 ===
-    @Field("maxChargeNum")
-    private Integer maxChargeNum;
-    @Field("buffIcon")
-    private String buffIcon;
-    @Field("shareCDID")
-    private Integer shareCDID;
-    @Field("cdSlot")
-    private Integer cdSlot;
-    @Field("globalValueKey")
-    private String globalValueKey;
     @Field("triggerID")
     private Integer triggerID;
+
     @Field("dragType")
     private String dragType;
+
+    @Field("forceCanDoSkill")
+    private Boolean forceCanDoSkill;
+
+    @Field("showIconArrow")
+    private Boolean showIconArrow;
+
+    @Field("ignoreCDMinusRatio")
+    private Boolean ignoreCDMinusRatio;
+
+    @Field("isRanged")
+    private Boolean isRanged;
+
+    @Field("buffIcon")
+    private String buffIcon;
+
     @Field("needMonitor")
     private String needMonitor;
 
-    // === 一堆不知道是什么玩意的混淆字段 ===
+    @Field("needStore")
+    private Boolean needStore;
 
-    @Field("BGMLPHCEHOL")
-    private String BGMLPHCEHOL;
+    @Field("isBobk")
+    private Boolean isBobk;
 
-    // === 一堆不知道是什么玩意的混淆布尔字段 ===
-    @Field("AILNLGPMDIL")
-    private Boolean AILNLGPMDIL;
-    @Field("MKBDMKMFLPN")
-    private Boolean MKBDMKMFLPN;
-    @Field("KOMGFAGBDFJ")
-    private Boolean KOMGFAGBDFJ;
-    @Field("MNHDMLMIBNJ")
-    private Boolean MNHDMLMIBNJ;
-    @Field("JPHOAKOCJNP")
-    private Boolean JPHOAKOCJNP;
-    @Field("CHFJHOOMPKM")
-    private Boolean CHFJHOOMPKM;
-    @Field("NIFEPGKKMAL")
-    private Boolean NIFEPGKKMAL;
-    @Field("IEBGELFLKJP")
-    private Boolean IEBGELFLKJP;
-    @Field("BKOGECMNPJP")
-    private Boolean BKOGECMNPJP;
-    @Field("NHINPABHLGM")
-    private Boolean NHINPABHLGM;
-     */
+    @Field("cdSlot")
+    private Integer cdSlot;
+
+    @Field("isLece")
+    private Boolean isLece;
+
+    @Field("globalValueKey")
+    private String globalValueKey;
 }

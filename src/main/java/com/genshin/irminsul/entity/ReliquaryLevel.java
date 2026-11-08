@@ -9,15 +9,16 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "reliquary_level")
 public class ReliquaryLevel {
+
     @Id
     private Integer id;
 
-    // 各等级的经验与属性成长
     @Field("levels")
     private List<Level> levels;
 
     @Data
     public static class Level {
+
         @Field("level")
         private Integer level;
 
@@ -30,6 +31,7 @@ public class ReliquaryLevel {
 
     @Data
     public static class AddProp {
+
         @Field("propType")
         private String propType;
 

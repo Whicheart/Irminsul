@@ -9,24 +9,24 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "avatar_promote")
 public class AvatarPromote {
+
     @Id
     private Integer id;
 
-    // 各突破等级
     @Field("levels")
     private List<PromoteLevel> levels;
 
-    // 单个突破等级
     @Data
     public static class PromoteLevel {
         @Field("promoteLevel")
         private Integer promoteLevel;
 
-        // 该阶突破后解锁的等级上限
         @Field("unlockMaxLevel")
         private Integer unlockMaxLevel;
 
-        // 摩拉消耗、材料消耗与属性加成
+        @Field("requiredPlayerLevel")
+        private Integer requiredPlayerLevel;
+
         @Field("scoinCost")
         private Integer scoinCost;
 
@@ -37,9 +37,9 @@ public class AvatarPromote {
         private List<AddProp> addProps;
     }
 
-    // 突破消耗的材料
     @Data
     public static class CostItem {
+
         @Field("id")
         private Integer id;
 
@@ -47,9 +47,9 @@ public class AvatarPromote {
         private Integer count;
     }
 
-    // 突破带来的属性加成
     @Data
     public static class AddProp {
+
         @Field("propType")
         private String propType;
 

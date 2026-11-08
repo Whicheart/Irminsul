@@ -9,13 +9,25 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "material_source_data")
 public class MaterialSourceData {
+
     @Id
     private Integer id;
 
-    // 获取途径描述与来源标签
     @Field("textList")
     private List<String> textList;
 
     @Field("sourceList")
     private List<String> sourceList;
+
+    @Field("jumpDescs")
+    private List<String> jumpDescs;
+
+    @Field("jumpTargets")
+    private List<String> jumpTargets;
+
+    @Field("dungeonList")
+    private List<Integer> dungeonList;
+
+    @Field("dungeonGroup")
+    private List<Integer> dungeonGroup;
 }

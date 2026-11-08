@@ -9,17 +9,19 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Document(collection = "avatar")
 public class Avatar {
+
     @Id
     private Integer id;
 
-    // 名称与描述的文本哈希
     @Field("nameTextMapHash")
     private String nameTextMapHash;
 
     @Field("descTextMapHash")
     private String descTextMapHash;
 
-    // 基础属性白值
+    @Field("infoDescTextMapHash")
+    private String infoDescTextMapHash;
+
     @Field("hpBase")
     private Double hpBase;
 
@@ -29,26 +31,48 @@ public class Avatar {
     @Field("defenseBase")
     private Double defenseBase;
 
-    @Field("critical")
-    private Double critical;
-
-    @Field("criticalHurt")
-    private Double criticalHurt;
-
     @Field("chargeEfficiency")
     private Double chargeEfficiency;
 
     @Field("elementMastery")
     private Double elementMastery;
 
-    // 关联的技能组与突破组 ID
+    @Field("critical")
+    private Double critical;
+
+    @Field("criticalHurt")
+    private Double criticalHurt;
+
+    @Field("staminaRecoverSpeed")
+    private Double staminaRecoverSpeed;
+
+    @Field("propGrowCurves")
+    private List<PropGrowCurve> propGrowCurves;
+
+    @Field("initialWeapon")
+    private Integer initialWeapon;
+
+    @Field("manekinMotionConfig")
+    private Integer manekinMotionConfig;
+
+    @Field("featureTagGroupID")
+    private Integer featureTagGroupID;
+
     @Field("skillDepotId")
     private Integer skillDepotId;
+
+    @Field("candSkillDepotIds")
+    private List<Integer> candSkillDepotIds;
 
     @Field("avatarPromoteId")
     private Integer avatarPromoteId;
 
-    // 分类枚举与标签
+    @Field("avatarPromoteRewardIdList")
+    private List<Integer> avatarPromoteRewardIdList;
+
+    @Field("avatarPromoteRewardLevelList")
+    private List<Integer> avatarPromoteRewardLevelList;
+
     @Field("weaponType")
     private String weaponType;
 
@@ -64,13 +88,12 @@ public class Avatar {
     @Field("avatarIdentityType")
     private String avatarIdentityType;
 
-    @Field("tags")
-    private List<String> tags;
-
     @Field("isRangeAttack")
     private Boolean isRangeAttack;
 
-    // 立绘与图标资源名
+    @Field("tags")
+    private List<String> tags;
+
     @Field("imageName")
     private String imageName;
 
@@ -80,55 +103,13 @@ public class Avatar {
     @Field("iconName")
     private String iconName;
 
-    // 属性成长曲线
-    @Field("propGrowCurves")
-    private List<PropGrowCurve> propGrowCurves;
-
     @Data
     public static class PropGrowCurve {
+
         @Field("growCurve")
         private String growCurve;
 
         @Field("type")
         private String type;
     }
-
-    /*
-    // === 某种加成属性但字段是混淆的 ===
-    @Field("CBADONBPEKC")
-    private String CBADONBPEKC; // 比如 "FIGHT_PROP_ELEMENT_MASTERY"
-
-    @Field("BEODCKHANHE")
-    private String BEODCKHANHE; // 比如 "FIGHT_PROP_CRITICAL"
-
-    @Field("CBEGCDFMBDF")
-    private String CBEGCDFMBDF; // 比如 "FIGHT_PROP_CRITICAL_HURT"
-
-    // === 某种 ID 但字段是混淆的 ===
-    @Field("HPOFBCBCNAE")
-    private String HPOFBCBCNAE;
-
-    @Field("CAPNJKODKKA")
-    private String CAPNJKODKKA;
-
-    // === 某种布尔但字段是混淆的 ===
-    @Field("GNNKOOOLBAJ")
-    private Boolean GNNKOOOLBAJ;
-
-    @Field("AKGABJMLFMC")
-    private Boolean AKGABJMLFMC;
-
-    // === 其他明文但不确定要不要用的 ===
-    @Field("gachaImageNameHash")
-    private String gachaImageNameHash;
-
-    @Field("gachaCardNameHash")
-    private String gachaCardNameHash;
-
-    @Field("featureTagGroupID")
-    private Integer featureTagGroupID;
-
-    @Field("candSkillDepotIds")
-    private List<Integer> candSkillDepotIds;
-    */
 }
