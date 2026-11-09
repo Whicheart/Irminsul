@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class WeaponBaseInfoDTO {
+
     private Integer id;
 
     private String name;
@@ -25,6 +26,7 @@ public class WeaponBaseInfoDTO {
 
     @Data
     public static class Material {
+
         private Integer promoteLevel;
         private Integer maxLevel;
         private Integer mora;
@@ -33,6 +35,7 @@ public class WeaponBaseInfoDTO {
 
     @Data
     public static class CostItem {
+
         private Integer id;
         private String name;
         private Integer count;
