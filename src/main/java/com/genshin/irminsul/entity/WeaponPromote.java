@@ -16,11 +16,11 @@ public class WeaponPromote {
     @Field("levels")
     private List<Level> levels;
 
-    @Field("requiredPlayerLevel")
-    private Integer requiredPlayerLevel;
-
     @Data
     public static class Level {
+
+        @Field("requiredPlayerLevel")
+        private Integer requiredPlayerLevel;
 
         @Field("promoteLevel")
         private Integer promoteLevel;
