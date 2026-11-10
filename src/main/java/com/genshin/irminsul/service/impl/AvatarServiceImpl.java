@@ -889,6 +889,7 @@ public class AvatarServiceImpl implements AvatarService {
         return switch (key) {
             case "MAINACTOR" -> "UI_Img_Pendant_Player";
             case "SNEZHNAYA_STAR" -> "UI_Img_Pendant_StellaVision";
+            case "SNEZHNAYA" -> "UI_Img_Pendant_Fatui";
             case "FONTAINE" -> {
                 String arkhe = "Furina".equals(arkheType) ? "Pneuma" : arkheType;
                 if (arkhe == null || arkhe.isEmpty()) {
