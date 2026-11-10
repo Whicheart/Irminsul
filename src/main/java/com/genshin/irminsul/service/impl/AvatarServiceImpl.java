@@ -13,12 +13,15 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AvatarServiceImpl implements AvatarService {
+    private static final String ASSOC_PREFIX = "ASSOC_TYPE_";
+    private static final int MAX_LEVEL = 100;
+    private static final int MAX_PROMOTE_LEVEL = 6;
+
     private final AvatarRepository avatarRepository;
     private final AvatarCodexRepository avatarCodexRepository;
     private final FettersRepository fettersRepository;
     private final FetterInfoRepository fetterInfoRepository;
     private final FetterStoryRepository fetterStoryRepository;
-    private final TextMapChsUtil textMapChsUtil;
     private final AvatarCurveRepository avatarCurveRepository;
     private final AvatarPromoteRepository avatarPromoteRepository;
     private final MaterialRepository materialRepository;
@@ -27,700 +30,919 @@ public class AvatarServiceImpl implements AvatarService {
     private final AvatarSkillRepository avatarSkillRepository;
     private final AvatarTalentRepository avatarTalentRepository;
     private final ProudSkillRepository proudSkillRepository;
+    private final TextMapChsUtil textMapChsUtil;
 
     private static final Set<String> EXCLUDED_AVATAR_NAMES = Set.of("旅行者", "奇偶·男性", "奇偶·女性");
     private static final Set<Integer> EXCLUDED_SKILL_IDS = Set.of(30506, 11076);
     private static final Set<Integer> EXCLUDED_PASSIVE_SKILL_IDS = Set.of(522301);
+    // 神明清单，用神之心
+    private static final Set<Integer> HEART_OF_GOD_AVATAR_IDS =
+            Set.of(10000022, 10000030, 10000052, 10000073, 10000106);
+
+    // 曲线表与等级无关，进程内缓存，改库后重启生效
+    private volatile Map<Integer, AvatarCurve> avatarCurveCache;
 
     @Override
     public List<AvatarList.AvatarBrief> getAvatarList(
             String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes) {
-        List<Avatar> avatars = avatarRepository.findAll();
-        List<AvatarCodex> codexes = avatarCodexRepository.findAll();
-        List<FetterInfo> infos = fetterInfoRepository.findAll();
+        List<AvatarRepository.AvatarBriefView> candidates = avatarRepository.findAllBrief().stream()
+                .filter(avatar -> avatar.getId() != null && avatar.getId() >= 10000002 && avatar.getId() <= 10000899)
+                .toList();
 
-        Map<Integer, AvatarCodex> codexMap = new HashMap<>();
-        for (AvatarCodex codex : codexes) {
-            codexMap.put(codex.getId(), codex);
-        }
+        Map<Integer, AvatarCodexRepository.AvatarCodexBriefView> codexById =
+                avatarCodexRepository.findAllBrief().stream()
+                        .filter(codex -> codex.getId() != null)
+                        .collect(Collectors.toMap(
+                                AvatarCodexRepository.AvatarCodexBriefView::getId,
+                                codex -> codex,
+                                (existing, replacement) -> existing));
+        Map<Integer, FetterInfoRepository.FetterInfoBriefView> infoById = fetterInfoRepository.findAllBrief().stream()
+                .filter(info -> info.getId() != null)
+                .collect(Collectors.toMap(
+                        FetterInfoRepository.FetterInfoBriefView::getId,
+                        info -> info,
+                        (existing, replacement) -> existing));
 
-        Map<Integer, FetterInfo> infoMap = new HashMap<>();
-        for (FetterInfo info : infos) {
-            infoMap.put(info.getId(), info);
-        }
-
-        List<AvatarList.AvatarBrief> result = new ArrayList<>();
-
-        for (Avatar avatar : avatars) {
-            String currentName = textMapChsUtil.getText(avatar.getNameTextMapHash());
-            if (avatar.getId() < 10000002 || avatar.getId() > 10000899) continue;
-            if (EXCLUDED_AVATAR_NAMES.contains(currentName)) continue;
-
-            AvatarList.AvatarBrief brief = new AvatarList.AvatarBrief();
-
-            brief.setId(avatar.getId());
-            brief.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
-            brief.setQualityType(avatar.getQualityType());
-            brief.setWeaponType(avatar.getWeaponType());
-            brief.setGachaIconName(toGachaIconName(avatar.getIconName()));
-            brief.setIconName(avatar.getIconName());
-
-            AvatarCodex codex = codexMap.get(avatar.getId());
-            if (codex != null) {
-                brief.setSortId(codex.getSortId());
-            }
-
-            FetterInfo info = infoMap.get(avatar.getId());
+        Set<String> hashes = new HashSet<>();
+        for (AvatarRepository.AvatarBriefView avatar : candidates) {
+            hashes.add(avatar.getNameTextMapHash());
+            FetterInfoRepository.FetterInfoBriefView info = infoById.get(avatar.getId());
             if (info != null) {
-                brief.setElement(translateElement(textMapChsUtil.getText(info.getAvatarVisionBeforTextMapHash())));
+                hashes.add(info.getAvatarVisionBeforTextMapHash());
+            }
+        }
+        Map<String, String> texts = textMapChsUtil.getTexts(hashes);
+
+        String nameFilter = name == null || name.trim().isEmpty() ? null : name.trim();
+        List<AvatarList.AvatarBrief> result = new ArrayList<>();
+        for (AvatarRepository.AvatarBriefView avatar : candidates) {
+            String avatarName = texts.get(avatar.getNameTextMapHash());
+            if (avatarName == null || EXCLUDED_AVATAR_NAMES.contains(avatarName)) {
+                continue;
+            }
+            FetterInfoRepository.FetterInfoBriefView info = infoById.get(avatar.getId());
+            String element = info == null ? null : translateElement(texts.get(info.getAvatarVisionBeforTextMapHash()));
+
+            if (nameFilter != null && !avatarName.contains(nameFilter)) {
+                continue;
+            }
+            if (elements != null && !elements.isEmpty() && !elements.contains(element)) {
+                continue;
+            }
+            if (weaponTypes != null && !weaponTypes.isEmpty() && !weaponTypes.contains(avatar.getWeaponType())) {
+                continue;
+            }
+            if (qualityTypes != null && !qualityTypes.isEmpty() && !qualityTypes.contains(avatar.getQualityType())) {
+                continue;
             }
 
+            AvatarCodexRepository.AvatarCodexBriefView codex = codexById.get(avatar.getId());
+            AvatarList.AvatarBrief brief = new AvatarList.AvatarBrief();
+            brief.setId(avatar.getId());
+            brief.setSortId(codex == null ? null : codex.getSortId());
+            brief.setName(avatarName);
+            brief.setQualityType(avatar.getQualityType());
+            brief.setElement(element);
+            brief.setWeaponType(avatar.getWeaponType());
+            brief.setGachaIconName(toGachaAvatarIcon(avatar.getIconName()));
+            brief.setIconName(avatar.getIconName());
             result.add(brief);
         }
 
-        result.sort((a, b) -> {
-            Integer s1 = a.getSortId() == null ? -1 : a.getSortId();
-            Integer s2 = b.getSortId() == null ? -1 : b.getSortId();
-            return s2.compareTo(s1);
-        });
-
-        if (name != null && !name.trim().isEmpty())
-            result = result.stream()
-                    .filter(a -> a.getName() != null && a.getName().contains(name.trim()))
-                    .collect(Collectors.toList());
-        if (elements != null && !elements.isEmpty())
-            result = result.stream()
-                    .filter(a -> elements.contains(a.getElement()))
-                    .collect(Collectors.toList());
-        if (weaponTypes != null && !weaponTypes.isEmpty())
-            result = result.stream()
-                    .filter(a -> weaponTypes.contains(a.getWeaponType()))
-                    .collect(Collectors.toList());
-        if (qualityTypes != null && !qualityTypes.isEmpty())
-            result = result.stream()
-                    .filter(a -> qualityTypes.contains(a.getQualityType()))
-                    .collect(Collectors.toList());
-
+        result.sort(Comparator.comparing(
+                (AvatarList.AvatarBrief brief) -> brief.getSortId() == null ? -1 : brief.getSortId(),
+                Comparator.reverseOrder()));
         return result;
     }
 
     @Override
     public AvatarBaseInfoDTO getAvatarBaseInfo(Integer id) {
-        // ==========================================
-        // 前期准备：查主表、关联表
-        // ==========================================
         Avatar avatar = avatarRepository.findById(id).orElse(null);
-        if (avatar == null) return null;
-        Integer avatarPromoteId = avatar.getAvatarPromoteId();
+        if (avatar == null) {
+            return null;
+        }
 
-        AvatarBaseInfoDTO avatarBaseInfoDTO = new AvatarBaseInfoDTO();
-        AvatarCodex avatarCodex = avatarCodexRepository.findById(id).orElse(new AvatarCodex());
-        AvatarPromote avatarPromote =
-                avatarPromoteRepository.findById(avatarPromoteId).orElse(new AvatarPromote());
-        FetterInfo fetterInfo = fetterInfoRepository.findById(id).orElse(new FetterInfo());
-        List<AvatarCurve> avatarCurveList = avatarCurveRepository.findAll();
+        AvatarCodex codex = avatarCodexRepository.findById(id).orElse(new AvatarCodex());
+        AvatarPromote promote = avatar.getAvatarPromoteId() == null
+                ? new AvatarPromote()
+                : avatarPromoteRepository.findById(avatar.getAvatarPromoteId()).orElse(new AvatarPromote());
+        FetterInfo fetter = fetterInfoRepository.findById(id).orElse(new FetterInfo());
+        AvatarSkillDepot depot = avatar.getSkillDepotId() == null
+                ? null
+                : avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
 
-        Map<Integer, AvatarCurve> curveMap =
-                avatarCurveList.stream().collect(Collectors.toMap(AvatarCurve::getLevel, c -> c));
+        Map<String, String> texts = textMapChsUtil.getTexts(List.of(
+                avatar.getNameTextMapHash(),
+                avatar.getInfoDescTextMapHash(),
+                avatar.getDescTextMapHash(),
+                fetter.getAvatarTitleTextMapHash(),
+                fetter.getAvatarNativeTextMapHash(),
+                fetter.getAvatarNative2TextMapHash(),
+                fetter.getAvatarConstellationBeforTextMapHash(),
+                fetter.getAvatarConstellationAfterTextMapHash(),
+                fetter.getAvatarPowerBeforTextMapHash(),
+                fetter.getAvatarPowerAfterTextMapHash(),
+                fetter.getAvatarVisionBeforTextMapHash(),
+                fetter.getAvatarVisionAfterTextMapHash(),
+                fetter.getCvChineseTextMapHash(),
+                fetter.getCvEnglishTextMapHash(),
+                fetter.getCvJapaneseTextMapHash(),
+                fetter.getCvKoreanTextMapHash()));
 
-        String defaultPower = "神之眼";
+        AvatarBaseInfoDTO dto = new AvatarBaseInfoDTO();
+        dto.setId(avatar.getId());
+        dto.setTitle(texts.get(fetter.getAvatarTitleTextMapHash()));
+        dto.setName(texts.get(avatar.getNameTextMapHash()));
+        String infoDesc = texts.get(avatar.getInfoDescTextMapHash());
+        dto.setDesc(infoDesc != null ? infoDesc : texts.get(avatar.getDescTextMapHash()));
+        dto.setQualityType(avatar.getQualityType());
+        dto.setWeaponType(avatar.getWeaponType());
+        dto.setReleaseTime(codex.getBeginTime());
+        dto.setCountry(fetter.getAvatarAssocType());
+        dto.setTags(avatar.getTags());
+        dto.setArkheType(depot == null ? null : depot.getArkheType());
 
-        // ==========================================
-        // 基础文本字段组装（使用 textMapChsUtil 翻译 Hash）
-        // ==========================================
-        avatarBaseInfoDTO.setId(avatar.getId());
-        avatarBaseInfoDTO.setName(textMapChsUtil.getText(avatar.getNameTextMapHash()));
-        avatarBaseInfoDTO.setTitle(textMapChsUtil.getText(fetterInfo.getAvatarTitleTextMapHash()));
-        avatarBaseInfoDTO.setDesc(textMapChsUtil.getText(avatar.getDescTextMapHash()));
-        avatarBaseInfoDTO.setQualityType(translateQuality(avatar.getQualityType()));
-        avatarBaseInfoDTO.setWeaponType(translateWeapon(avatar.getWeaponType()));
-        avatarBaseInfoDTO.setReleaseTime(avatarCodex.getBeginTime());
-        avatarBaseInfoDTO.setAssocType(fetterInfo.getAvatarAssocType());
-
-        // ==========================================
-        // 嵌套对象组装（阵营、生日、命座、力量、元素、CV）
-        // ==========================================
         List<String> affiliation = new ArrayList<>();
-        String aff1 = textMapChsUtil.getText(fetterInfo.getAvatarNativeTextMapHash());
-        String aff2 = textMapChsUtil.getText(fetterInfo.getAvatarNative2TextMapHash());
-        if (aff1 != null && !aff1.isEmpty()) affiliation.add(aff1);
-        if (aff2 != null && !aff2.isEmpty()) affiliation.add(aff2);
-        avatarBaseInfoDTO.setAffiliation(affiliation);
+        String native1 = texts.get(fetter.getAvatarNativeTextMapHash());
+        String native2 = texts.get(fetter.getAvatarNative2TextMapHash());
+        if (native1 != null && !native1.isEmpty()) {
+            affiliation.add(native1);
+        }
+        if (native2 != null && !native2.isEmpty()) {
+            affiliation.add(native2);
+        }
+        dto.setAffiliation(affiliation);
 
         AvatarBaseInfoDTO.Birth birth = new AvatarBaseInfoDTO.Birth();
-        birth.setMonth(fetterInfo.getInfoBirthMonth());
-        birth.setDay(fetterInfo.getInfoBirthDay());
-        avatarBaseInfoDTO.setBirth(birth);
+        birth.setMonth(fetter.getInfoBirthMonth());
+        birth.setDay(fetter.getInfoBirthDay());
+        dto.setBirth(birth);
 
         AvatarBaseInfoDTO.Constellation constellation = new AvatarBaseInfoDTO.Constellation();
-        constellation.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarConstellationBeforTextMapHash()));
-        constellation.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarConstellationAfterTextMapHash()));
-        avatarBaseInfoDTO.setConstellation(constellation);
+        constellation.setBefor(texts.get(fetter.getAvatarConstellationBeforTextMapHash()));
+        constellation.setAfter(texts.get(fetter.getAvatarConstellationAfterTextMapHash()));
+        dto.setConstellation(constellation);
 
+        String defaultPower = HEART_OF_GOD_AVATAR_IDS.contains(avatar.getId()) ? "神之心" : "神之眼";
         AvatarBaseInfoDTO.Vision vision = new AvatarBaseInfoDTO.Vision();
-        vision.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarPowerBeforTextMapHash()));
-        vision.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarPowerAfterTextMapHash()));
-        if (vision.getBefor() == null) vision.setBefor(defaultPower);
-        avatarBaseInfoDTO.setVision(vision);
+        vision.setBefor(orDefault(texts.get(fetter.getAvatarPowerBeforTextMapHash()), defaultPower));
+        vision.setAfter(texts.get(fetter.getAvatarPowerAfterTextMapHash()));
+        vision.setIconName(toVisionIconName(fetter.getAvatarAssocType(), depot == null ? null : depot.getArkheType()));
+        dto.setVision(vision);
 
+        String elementText = texts.get(fetter.getAvatarVisionBeforTextMapHash());
         AvatarBaseInfoDTO.Element element = new AvatarBaseInfoDTO.Element();
-        element.setBefor(textMapChsUtil.getText(fetterInfo.getAvatarVisionBeforTextMapHash()));
-        element.setAfter(textMapChsUtil.getText(fetterInfo.getAvatarVisionAfterTextMapHash()));
-        avatarBaseInfoDTO.setElement(element);
+        element.setBefor(elementText);
+        element.setAfter(texts.get(fetter.getAvatarVisionAfterTextMapHash()));
+        element.setIconName(toElementIconName(fetter.getAvatarAssocType(), translateElement(elementText)));
+        dto.setElement(element);
 
         AvatarBaseInfoDTO.Cv cv = new AvatarBaseInfoDTO.Cv();
-        cv.setCn(textMapChsUtil.getText(fetterInfo.getCvChineseTextMapHash()));
-        cv.setEn(textMapChsUtil.getText(fetterInfo.getCvEnglishTextMapHash()));
-        cv.setJp(textMapChsUtil.getText(fetterInfo.getCvJapaneseTextMapHash()));
-        cv.setKr(textMapChsUtil.getText(fetterInfo.getCvKoreanTextMapHash()));
-        avatarBaseInfoDTO.setCv(cv);
+        cv.setCn(texts.get(fetter.getCvChineseTextMapHash()));
+        cv.setEn(texts.get(fetter.getCvEnglishTextMapHash()));
+        cv.setJp(texts.get(fetter.getCvJapaneseTextMapHash()));
+        cv.setKr(texts.get(fetter.getCvKoreanTextMapHash()));
+        dto.setCv(cv);
 
-        // ==========================================
-        // 基础三维、元素精通与突破加成计算
-        // ==========================================
-        List<AvatarPromote.PromoteLevel> promoteLevels = avatarPromote.getLevels();
-        List<Avatar.PropGrowCurve> propGrowCurves = avatar.getPropGrowCurves();
-        List<Double> hpList = new ArrayList<>();
-        List<Double> atkList = new ArrayList<>();
-        List<Double> defList = new ArrayList<>();
-        List<Double> propList = new ArrayList<>();
+        buildAttributes(avatar, promote, dto);
 
-        String hpCurveType = null;
-        String atkCurveType = null;
-        String defCurveType = null;
-        if (propGrowCurves != null) {
-            for (Avatar.PropGrowCurve curve : propGrowCurves) {
-                if ("FIGHT_PROP_BASE_HP".equals(curve.getType())) hpCurveType = curve.getGrowCurve();
-                if ("FIGHT_PROP_BASE_ATTACK".equals(curve.getType())) atkCurveType = curve.getGrowCurve();
-                if ("FIGHT_PROP_BASE_DEFENSE".equals(curve.getType())) defCurveType = curve.getGrowCurve();
+        dto.setMaterials(List.of(buildMaterials(promote, depot)));
+        dto.setGachaImageName(toGachaAvatarImage(avatar.getIconName()));
+        return dto;
+    }
+
+    private void buildAttributes(Avatar avatar, AvatarPromote promote, AvatarBaseInfoDTO dto) {
+        Map<Integer, AvatarCurve> curves = avatarCurves();
+        List<Avatar.PropGrowCurve> growCurves = avatar.getPropGrowCurves();
+
+        String hpCurve = null;
+        String atkCurve = null;
+        String defCurve = null;
+        if (growCurves != null) {
+            for (Avatar.PropGrowCurve growCurve : growCurves) {
+                if ("FIGHT_PROP_BASE_HP".equals(growCurve.getType())) {
+                    hpCurve = growCurve.getGrowCurve();
+                } else if ("FIGHT_PROP_BASE_ATTACK".equals(growCurve.getType())) {
+                    atkCurve = growCurve.getGrowCurve();
+                } else if ("FIGHT_PROP_BASE_DEFENSE".equals(growCurve.getType())) {
+                    defCurve = growCurve.getGrowCurve();
+                }
             }
         }
 
-        Map<Integer, Double> hpBonusMap = new HashMap<>();
-        Map<Integer, Double> atkBonusMap = new HashMap<>();
-        Map<Integer, Double> defBonusMap = new HashMap<>();
-        Map<Integer, Double> propBonusMap = new HashMap<>();
-        String ascStatName = null;
+        double[] hpBonus = new double[MAX_PROMOTE_LEVEL + 1];
+        double[] atkBonus = new double[MAX_PROMOTE_LEVEL + 1];
+        double[] defBonus = new double[MAX_PROMOTE_LEVEL + 1];
+        double[] ascValue = new double[MAX_PROMOTE_LEVEL + 1];
+        String ascType = null;
 
-        for (int i = 0; i <= 6; i++) {
-            hpBonusMap.put(i, 0.0);
-            atkBonusMap.put(i, 0.0);
-            defBonusMap.put(i, 0.0);
-            propBonusMap.put(i, 0.0);
-        }
-
+        List<AvatarPromote.PromoteLevel> promoteLevels = promote.getLevels();
         if (promoteLevels != null) {
-            for (AvatarPromote.PromoteLevel lvl : promoteLevels) {
-                int pLevel = lvl.getPromoteLevel();
-                if (lvl.getAddProps() != null) {
-                    for (AvatarPromote.AddProp prop : lvl.getAddProps()) {
-                        Double val = prop.getValue() != null ? prop.getValue() : 0.0;
-                        if ("FIGHT_PROP_BASE_HP".equals(prop.getPropType())) {
-                            hpBonusMap.put(pLevel, val);
-                        } else if ("FIGHT_PROP_BASE_ATTACK".equals(prop.getPropType())) {
-                            atkBonusMap.put(pLevel, val);
-                        } else if ("FIGHT_PROP_BASE_DEFENSE".equals(prop.getPropType())) {
-                            defBonusMap.put(pLevel, val);
-                        } else if (prop.getPropType() != null
-                                && !prop.getPropType().isEmpty()) {
-                            ascStatName = prop.getPropType();
-                            propBonusMap.put(pLevel, val);
+            for (AvatarPromote.PromoteLevel promoteLevel : promoteLevels) {
+                Integer level = promoteLevel.getPromoteLevel();
+                if (level == null || level < 0 || level > MAX_PROMOTE_LEVEL) {
+                    continue;
+                }
+                if (promoteLevel.getAddProps() == null) {
+                    continue;
+                }
+                for (AvatarPromote.AddProp prop : promoteLevel.getAddProps()) {
+                    if (prop.getPropType() == null || prop.getPropType().isEmpty()) {
+                        continue;
+                    }
+                    double value = prop.getValue() == null ? 0.0 : prop.getValue();
+                    switch (prop.getPropType()) {
+                        case "FIGHT_PROP_BASE_HP" -> hpBonus[level] = value;
+                        case "FIGHT_PROP_BASE_ATTACK" -> atkBonus[level] = value;
+                        case "FIGHT_PROP_BASE_DEFENSE" -> defBonus[level] = value;
+                        default -> {
+                            if (ascType == null) {
+                                ascType = prop.getPropType();
+                            }
+                            if (ascType.equals(prop.getPropType())) {
+                                ascValue[level] = value;
+                            }
                         }
                     }
                 }
             }
         }
 
-        for (int level = 1; level <= curveMap.size(); level++) {
-            AvatarCurve curve = curveMap.get(level);
-            if (curve != null && curve.getCurves() != null) {
-                Double hpMulti = curve.getCurves().get(hpCurveType);
-                Double atkMulti = curve.getCurves().get(atkCurveType);
-                Double defMulti = curve.getCurves().get(defCurveType);
+        double hpBase = avatar.getHpBase() == null ? 0.0 : avatar.getHpBase();
+        double atkBase = avatar.getAttackBase() == null ? 0.0 : avatar.getAttackBase();
+        double defBase = avatar.getDefenseBase() == null ? 0.0 : avatar.getDefenseBase();
 
-                int currentPromoteLevel = 0;
-                if (level >= 80) currentPromoteLevel = 6;
-                else if (level >= 70) currentPromoteLevel = 5;
-                else if (level >= 60) currentPromoteLevel = 4;
-                else if (level >= 50) currentPromoteLevel = 3;
-                else if (level >= 40) currentPromoteLevel = 2;
-                else if (level >= 20) currentPromoteLevel = 1;
-
-                Double hpBonus = hpBonusMap.get(currentPromoteLevel);
-                Double atkBonus = atkBonusMap.get(currentPromoteLevel);
-                Double defBonus = defBonusMap.get(currentPromoteLevel);
-                Double propBonus = propBonusMap.get(currentPromoteLevel);
-
-                hpList.add(hpMulti != null ? avatar.getHpBase() * hpMulti + hpBonus : 0.0);
-                atkList.add(atkMulti != null ? avatar.getAttackBase() * atkMulti + atkBonus : 0.0);
-                defList.add(defMulti != null ? avatar.getDefenseBase() * defMulti + defBonus : 0.0);
-                propList.add(propBonus);
-            }
+        List<Double> hp = new ArrayList<>(MAX_LEVEL);
+        List<Double> atk = new ArrayList<>(MAX_LEVEL);
+        List<Double> def = new ArrayList<>(MAX_LEVEL);
+        List<Double> ascension = new ArrayList<>(MAX_LEVEL);
+        for (int level = 1; level <= MAX_LEVEL; level++) {
+            AvatarCurve curve = curves.get(level);
+            int promoteLevel = toPromoteLevel(level);
+            hp.add(hpBase * curveValue(curve, hpCurve) + hpBonus[promoteLevel]);
+            atk.add(atkBase * curveValue(curve, atkCurve) + atkBonus[promoteLevel]);
+            def.add(defBase * curveValue(curve, defCurve) + defBonus[promoteLevel]);
+            ascension.add(ascValue[promoteLevel]);
         }
 
-        // ==========================================
-        // 基础三维、元素精通与突破加成组装
-        // ==========================================
-        avatarBaseInfoDTO.setHp(hpList);
-        avatarBaseInfoDTO.setAtk(atkList);
-        avatarBaseInfoDTO.setDef(defList);
-        avatarBaseInfoDTO.setAscensionStatName(translateStat(ascStatName));
-        avatarBaseInfoDTO.setAscensionStatValue(propList);
-        if (avatar.getElementMastery() != null) avatarBaseInfoDTO.setElementMastery(avatar.getElementMastery());
+        dto.setHp(hp);
+        dto.setAtk(atk);
+        dto.setDef(def);
+        dto.setElementMastery(avatar.getElementMastery());
+        dto.setAscensionStatName(translateStat(ascType));
+        dto.setAscensionStatValue(ascension);
+    }
 
-        // ==========================================
-        // 材料表
-        // ==========================================
-        List<Integer> materialIds = new ArrayList<>();
-        if (promoteLevels != null) {
-            for (AvatarPromote.PromoteLevel lvl : promoteLevels) {
-                if (lvl.getCostItems() == null) continue;
-                for (AvatarPromote.CostItem item : lvl.getCostItems()) {
-                    if (item != null && item.getId() != null) materialIds.add(item.getId());
-                }
-            }
-        }
-
-        Map<Integer, String> materialNameMap = new HashMap<>();
-        if (!materialIds.isEmpty()) {
-            materialRepository
-                    .findAllById(materialIds)
-                    .forEach(m -> materialNameMap.put(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
-        }
-        Map<Integer, String> materialIconNameMap = new HashMap<>();
-        if (!materialIds.isEmpty()) {
-            materialRepository.findAllById(materialIds).forEach(m -> materialIconNameMap.put(m.getId(), m.getIcon()));
-        }
-
+    private AvatarBaseInfoDTO.Material buildMaterials(AvatarPromote promote, AvatarSkillDepot depot) {
         List<AvatarBaseInfoDTO.LevelUpMaterial> levelUpMaterials = new ArrayList<>();
+        Set<Integer> materialIds = new LinkedHashSet<>();
+        List<AvatarPromote.PromoteLevel> promoteLevels = promote.getLevels();
         if (promoteLevels != null) {
-            for (AvatarPromote.PromoteLevel lvl : promoteLevels) {
-                if (lvl.getPromoteLevel() == 0) continue;
-                AvatarBaseInfoDTO.LevelUpMaterial levelUpMaterial = new AvatarBaseInfoDTO.LevelUpMaterial();
-                levelUpMaterial.setPromoteLevel(lvl.getPromoteLevel());
-                levelUpMaterial.setMaxLevel(lvl.getUnlockMaxLevel());
-                levelUpMaterial.setMora(lvl.getScoinCost());
-
-                List<AvatarBaseInfoDTO.CostItem> costItems = new ArrayList<>();
-                if (lvl.getCostItems() != null) {
-                    for (AvatarPromote.CostItem item : lvl.getCostItems()) {
-                        if (item == null || item.getId() == null) continue;
-                        AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
-                        costItem.setId(item.getId());
-                        costItem.setName(materialNameMap.get(item.getId()));
-                        costItem.setCount(item.getCount());
-                        costItem.setIconName(materialIconNameMap.get(item.getId()));
-                        costItems.add(costItem);
+            for (AvatarPromote.PromoteLevel promoteLevel : promoteLevels) {
+                if (promoteLevel.getCostItems() == null) {
+                    continue;
+                }
+                for (AvatarPromote.CostItem item : promoteLevel.getCostItems()) {
+                    if (item != null && item.getId() != null) {
+                        materialIds.add(item.getId());
                     }
                 }
-                levelUpMaterial.setCostItems(costItems);
+            }
+        }
+
+        List<ProudSkill> proudSkills = new ArrayList<>();
+        Integer proudSkillGroupId = findProudSkillGroupId(depot);
+        if (proudSkillGroupId != null) {
+            proudSkills = proudSkillRepository.findByProudSkillGroupIdInOrderByProudSkillGroupIdAscLevelAsc(
+                    List.of(proudSkillGroupId));
+            for (ProudSkill proudSkill : proudSkills) {
+                if (proudSkill.getCostItems() == null) {
+                    continue;
+                }
+                for (ProudSkill.CostItem item : proudSkill.getCostItems()) {
+                    if (item != null && item.getId() != null) {
+                        materialIds.add(item.getId());
+                    }
+                }
+            }
+        }
+
+        Map<Integer, MaterialRepository.MaterialBriefView> materials =
+                materialRepository.findBriefByIdIn(materialIds).stream()
+                        .filter(material -> material.getId() != null)
+                        .collect(Collectors.toMap(
+                                MaterialRepository.MaterialBriefView::getId,
+                                material -> material,
+                                (existing, replacement) -> existing));
+        Map<String, String> materialTexts = textMapChsUtil.getTexts(materials.values().stream()
+                .map(MaterialRepository.MaterialBriefView::getNameTextMapHash)
+                .toList());
+        Map<Integer, String> materialNames = new HashMap<>();
+        materials.forEach((materialId, material) ->
+                materialNames.put(materialId, materialTexts.get(material.getNameTextMapHash())));
+
+        if (promoteLevels != null) {
+            for (AvatarPromote.PromoteLevel promoteLevel : promoteLevels) {
+                Integer level = promoteLevel.getPromoteLevel();
+                if (level == null || level < 1) {
+                    continue;
+                }
+                AvatarBaseInfoDTO.LevelUpMaterial levelUpMaterial = new AvatarBaseInfoDTO.LevelUpMaterial();
+                levelUpMaterial.setPromoteLevel(level);
+                levelUpMaterial.setUnlockMaxLevel(promoteLevel.getUnlockMaxLevel());
+                levelUpMaterial.setMoraCost(promoteLevel.getScoinCost());
+                levelUpMaterial.setCostItems(
+                        buildAvatarCostItems(promoteLevel.getCostItems(), materials, materialNames));
                 levelUpMaterials.add(levelUpMaterial);
             }
         }
 
-        // 天赋材料：技能仓库取天赋组，再按组取各等级消耗
         List<AvatarBaseInfoDTO.TalentUpMaterial> talentUpMaterials = new ArrayList<>();
-        AvatarSkillDepot skillDepot =
-                avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
-        Integer proudSkillGroupId = null;
-        if (skillDepot != null && skillDepot.getSkills() != null) {
-            for (Integer skillId : skillDepot.getSkills()) {
-                // skills 末尾有 0 占位，跳过
-                if (skillId == null || skillId == 0) continue;
-                AvatarSkill avatarSkill =
-                        avatarSkillRepository.findById(skillId).orElse(null);
-                if (avatarSkill != null && avatarSkill.getProudSkillGroupId() != null) {
-                    // 三个天赋共用同一套材料，只取第一个技能所在组
-                    proudSkillGroupId = avatarSkill.getProudSkillGroupId();
-                    break;
-                }
-            }
+        for (ProudSkill proudSkill : proudSkills) {
+            AvatarBaseInfoDTO.TalentUpMaterial talentUpMaterial = new AvatarBaseInfoDTO.TalentUpMaterial();
+            talentUpMaterial.setLevel(proudSkill.getLevel());
+            talentUpMaterial.setMoraCost(proudSkill.getCoinCost());
+            talentUpMaterial.setCostItems(buildProudCostItems(proudSkill.getCostItems(), materials, materialNames));
+            talentUpMaterials.add(talentUpMaterial);
         }
 
-        if (proudSkillGroupId != null) {
-            List<ProudSkill> proudSkills =
-                    proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(proudSkillGroupId);
-
-            List<Integer> talentMaterialIds = new ArrayList<>();
-            for (ProudSkill proudSkill : proudSkills) {
-                if (proudSkill.getCostItems() == null) continue;
-                for (ProudSkill.CostItem item : proudSkill.getCostItems()) {
-                    if (item != null && item.getId() != null) talentMaterialIds.add(item.getId());
-                }
-            }
-            if (!talentMaterialIds.isEmpty()) {
-                materialRepository
-                        .findAllById(talentMaterialIds)
-                        .forEach(m ->
-                                materialNameMap.putIfAbsent(m.getId(), textMapChsUtil.getText(m.getNameTextMapHash())));
-            }
-
-            for (ProudSkill proudSkill : proudSkills) {
-                AvatarBaseInfoDTO.TalentUpMaterial talentUpMaterial = new AvatarBaseInfoDTO.TalentUpMaterial();
-                talentUpMaterial.setLevel(proudSkill.getLevel());
-                talentUpMaterial.setMora(proudSkill.getCoinCost());
-
-                List<AvatarBaseInfoDTO.CostItem> costItems = new ArrayList<>();
-                if (proudSkill.getCostItems() != null) {
-                    for (ProudSkill.CostItem item : proudSkill.getCostItems()) {
-                        if (item == null || item.getId() == null) continue;
-                        AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
-                        costItem.setId(item.getId());
-                        costItem.setName(materialNameMap.get(item.getId()));
-                        costItem.setCount(item.getCount());
-                        costItem.setIconName(materialIconNameMap.get(item.getId()));
-                        costItems.add(costItem);
-                    }
-                }
-                talentUpMaterial.setCostItems(costItems);
-                talentUpMaterials.add(talentUpMaterial);
-            }
-        }
-
-        // ==========================================
-        // 材料表组装
-        // ==========================================
         AvatarBaseInfoDTO.Material material = new AvatarBaseInfoDTO.Material();
         material.setLevelUpMaterial(levelUpMaterials);
         material.setTalentUpMaterial(talentUpMaterials);
-        avatarBaseInfoDTO.setMaterials(List.of(material));
+        return material;
+    }
 
-        avatarBaseInfoDTO.setGachaImageName(toGachaImageName(avatar.getIconName()));
+    private List<AvatarBaseInfoDTO.CostItem> buildAvatarCostItems(
+            List<AvatarPromote.CostItem> costItems,
+            Map<Integer, MaterialRepository.MaterialBriefView> materials,
+            Map<Integer, String> materialNames) {
+        List<AvatarBaseInfoDTO.CostItem> result = new ArrayList<>();
+        if (costItems == null) {
+            return result;
+        }
+        for (AvatarPromote.CostItem item : costItems) {
+            if (item == null || item.getId() == null) {
+                continue;
+            }
+            AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
+            costItem.setId(item.getId());
+            costItem.setName(materialNames.get(item.getId()));
+            costItem.setCount(item.getCount());
+            MaterialRepository.MaterialBriefView material = materials.get(item.getId());
+            costItem.setIconName(material == null ? null : material.getIcon());
+            result.add(costItem);
+        }
+        return result;
+    }
 
-        return avatarBaseInfoDTO;
+    private List<AvatarBaseInfoDTO.CostItem> buildProudCostItems(
+            List<ProudSkill.CostItem> costItems,
+            Map<Integer, MaterialRepository.MaterialBriefView> materials,
+            Map<Integer, String> materialNames) {
+        List<AvatarBaseInfoDTO.CostItem> result = new ArrayList<>();
+        if (costItems == null) {
+            return result;
+        }
+        for (ProudSkill.CostItem item : costItems) {
+            if (item == null || item.getId() == null) {
+                continue;
+            }
+            AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
+            costItem.setId(item.getId());
+            costItem.setName(materialNames.get(item.getId()));
+            costItem.setCount(item.getCount());
+            MaterialRepository.MaterialBriefView material = materials.get(item.getId());
+            costItem.setIconName(material == null ? null : material.getIcon());
+            result.add(costItem);
+        }
+        return result;
+    }
+
+    private Integer findProudSkillGroupId(AvatarSkillDepot depot) {
+        if (depot == null || depot.getSkills() == null) {
+            return null;
+        }
+        List<Integer> skillIds = depot.getSkills().stream()
+                .filter(skillId -> skillId != null && skillId != 0)
+                .toList();
+        if (skillIds.isEmpty()) {
+            return null;
+        }
+        Map<Integer, AvatarSkillRepository.AvatarSkillBriefView> skills =
+                avatarSkillRepository.findBriefByIdIn(skillIds).stream()
+                        .filter(skill -> skill.getId() != null)
+                        .collect(Collectors.toMap(
+                                AvatarSkillRepository.AvatarSkillBriefView::getId,
+                                skill -> skill,
+                                (existing, replacement) -> existing));
+        for (Integer skillId : skillIds) {
+            AvatarSkillRepository.AvatarSkillBriefView skill = skills.get(skillId);
+            if (skill != null && skill.getProudSkillGroupId() != null) {
+                return skill.getProudSkillGroupId();
+            }
+        }
+        return null;
     }
 
     @Override
     public AvatarOutfitDTO getAvatarOutfits(Integer id) {
-        AvatarOutfitDTO avatarOutfitDTO = new AvatarOutfitDTO();
-        List<AvatarOutfitDTO.Outfit> outfits = new ArrayList<>();
-        List<AvatarCostume> avatarCostumes = avatarCostumeRepository.findByCharacterId(id);
+        Avatar avatar = avatarRepository.findById(id).orElse(null);
+        List<AvatarCostume> costumes = avatarCostumeRepository.findByCharacterId(id);
+        Map<String, String> texts = textMapChsUtil.getTexts(costumes.stream()
+                .flatMap(costume ->
+                        java.util.stream.Stream.of(costume.getNameTextMapHash(), costume.getDescTextMapHash()))
+                .toList());
 
-        for (AvatarCostume avatarCostume : avatarCostumes) {
-            if (avatarCostume == null) continue;
+        List<AvatarOutfitDTO.Outfit> outfits = new ArrayList<>();
+        for (AvatarCostume costume : costumes) {
             AvatarOutfitDTO.Outfit outfit = new AvatarOutfitDTO.Outfit();
-            outfit.setId(avatarCostume.getId());
-            outfit.setName(textMapChsUtil.getText(avatarCostume.getNameTextMapHash()));
-            outfit.setDesc(textMapChsUtil.getText(avatarCostume.getDescTextMapHash()));
-            outfit.setQuality(avatarCostume.getQuality());
-            outfit.setIndexID(avatarCostume.getIndexID());
-            outfit.setImageName(toCustomImageName(avatarCostume.getFrontIconName()));
+            outfit.setId(costume.getId());
+            outfit.setName(texts.get(costume.getNameTextMapHash()));
+            outfit.setDesc(texts.get(costume.getDescTextMapHash()));
+            outfit.setQuality(costume.getQuality());
+            outfit.setIndexID(costume.getIndexID());
+            outfit.setIsDefault(Boolean.TRUE.equals(costume.getIsDefault()));
+            // 默认时装用角色抽卡立绘
+            outfit.setImageName(
+                    Boolean.TRUE.equals(costume.getIsDefault())
+                            ? toGachaAvatarImage(avatar == null ? null : avatar.getIconName())
+                            : toCostumeImage(costume.getFrontIconName()));
+            outfit.setAvatarCardName(
+                    avatar == null || avatar.getIconName() == null ? null : avatar.getIconName() + "_Card");
+            outfit.setCostumeCardName(costume.getFrontIconName() == null ? null : costume.getFrontIconName() + "_Card");
             outfits.add(outfit);
         }
 
-        outfits.sort((a, b) -> {
-            int i1 = a.getIndexID() == null ? -1 : a.getIndexID();
-            int i2 = b.getIndexID() == null ? -1 : b.getIndexID();
-            return Integer.compare(i1, i2);
-        });
-
-        avatarOutfitDTO.setId(id);
-        avatarOutfitDTO.setOutfits(outfits);
-
-        return avatarOutfitDTO;
+        outfits.sort(Comparator.comparing(
+                (AvatarOutfitDTO.Outfit outfit) -> outfit.getIndexID() == null ? -1 : outfit.getIndexID()));
+        AvatarOutfitDTO dto = new AvatarOutfitDTO();
+        dto.setId(id);
+        dto.setOutfits(outfits);
+        return dto;
     }
 
     @Override
     public AvatarStoryDTO getAvatarStories(Integer id) {
-        AvatarStoryDTO avatarStoryDTO = new AvatarStoryDTO();
-        List<AvatarStoryDTO.Story> stories = new ArrayList<>();
-        List<FetterStory> fetterStories = fetterStoryRepository.findByAvatarIdOrderByFetterIdAsc(id);
-
-        if (fetterStories != null) {
-            for (FetterStory fetterStory : fetterStories) {
-                if (fetterStory == null) continue;
-
-                AvatarStoryDTO.Story story = new AvatarStoryDTO.Story();
-                story.setTitle(textMapChsUtil.getText(fetterStory.getStoryTitleTextMapHash()));
-                story.setText(textMapChsUtil.getText(fetterStory.getStoryContextTextMapHash()));
-
-                List<String> tips = new ArrayList<>();
-                if (fetterStory.getTips() != null) {
-                    for (String tipHash : fetterStory.getTips()) {
-                        String tip = textMapChsUtil.getText(tipHash);
-                        if (tip != null) tips.add(tip);
-                    }
-                }
-                story.setTips(tips);
-
-                stories.add(story);
+        List<FetterStory> stories = fetterStoryRepository.findByAvatarIdOrderByFetterIdAsc(id);
+        Set<String> hashes = new LinkedHashSet<>();
+        for (FetterStory story : stories) {
+            hashes.add(story.getStoryTitleTextMapHash());
+            hashes.add(story.getStoryContextTextMapHash());
+            if (story.getTips() != null) {
+                hashes.addAll(story.getTips());
             }
         }
+        Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
-        avatarStoryDTO.setId(id);
-        avatarStoryDTO.setStories(stories);
-        return avatarStoryDTO;
+        List<AvatarStoryDTO.Story> result = new ArrayList<>();
+        for (FetterStory story : stories) {
+            AvatarStoryDTO.Story item = new AvatarStoryDTO.Story();
+            item.setTitle(texts.get(story.getStoryTitleTextMapHash()));
+            item.setText(texts.get(story.getStoryContextTextMapHash()));
+            item.setTips(translateTips(story.getTips(), texts));
+            result.add(item);
+        }
+
+        AvatarStoryDTO dto = new AvatarStoryDTO();
+        dto.setId(id);
+        dto.setStories(result);
+        return dto;
     }
 
     @Override
     public AvatarVoiceDTO getAvatarVoices(Integer id) {
-        AvatarVoiceDTO avatarVoiceDTO = new AvatarVoiceDTO();
+        List<Fetters> fetters = fettersRepository.findByAvatarIdOrderByTypeAscFetterIdAsc(id);
+        Set<String> hashes = new LinkedHashSet<>();
+        for (Fetters fetter : fetters) {
+            hashes.add(fetter.getVoiceTitleTextMapHash());
+            hashes.add(fetter.getVoiceFileTextTextMapHash());
+            if (fetter.getTips() != null) {
+                hashes.addAll(fetter.getTips());
+            }
+        }
+        Map<String, String> texts = textMapChsUtil.getTexts(hashes);
+
         List<AvatarVoiceDTO.Daily> dailies = new ArrayList<>();
         List<AvatarVoiceDTO.Battle> battles = new ArrayList<>();
-
-        List<Fetters> fettersList = fettersRepository.findByAvatarIdOrderByTypeAscFetterIdAsc(id);
-
-        if (fettersList != null) {
-            for (Fetters fetters : fettersList) {
-                if (fetters == null) continue;
-
-                List<String> tips = new ArrayList<>();
-                if (fetters.getTips() != null) {
-                    for (String tipHash : fetters.getTips()) {
-                        String tip = textMapChsUtil.getText(tipHash);
-                        if (tip != null) tips.add(tip);
-                    }
-                }
-
-                if (fetters.getType() != null && fetters.getType() == 1) {
-                    AvatarVoiceDTO.Daily daily = new AvatarVoiceDTO.Daily();
-                    daily.setTitle(textMapChsUtil.getText(fetters.getVoiceTitleTextMapHash()));
-                    daily.setText(textMapChsUtil.getText(fetters.getVoiceFileTextTextMapHash()));
-                    daily.setTips(tips);
-                    dailies.add(daily);
-
-                } else if (fetters.getType() != null && fetters.getType() == 2) {
-                    AvatarVoiceDTO.Battle battle = new AvatarVoiceDTO.Battle();
-                    battle.setTitle(textMapChsUtil.getText(fetters.getVoiceTitleTextMapHash()));
-                    battle.setText(textMapChsUtil.getText(fetters.getVoiceFileTextTextMapHash()));
-                    battle.setTips(tips);
-                    battles.add(battle);
-                }
+        for (Fetters fetter : fetters) {
+            if (fetter.getType() == null) {
+                continue;
+            }
+            List<String> tips = translateTips(fetter.getTips(), texts);
+            if (fetter.getType() == 1) {
+                AvatarVoiceDTO.Daily daily = new AvatarVoiceDTO.Daily();
+                daily.setTitle(texts.get(fetter.getVoiceTitleTextMapHash()));
+                daily.setText(texts.get(fetter.getVoiceFileTextTextMapHash()));
+                daily.setTips(tips);
+                dailies.add(daily);
+            } else if (fetter.getType() == 2) {
+                AvatarVoiceDTO.Battle battle = new AvatarVoiceDTO.Battle();
+                battle.setTitle(texts.get(fetter.getVoiceTitleTextMapHash()));
+                battle.setText(texts.get(fetter.getVoiceFileTextTextMapHash()));
+                battle.setTips(tips);
+                battles.add(battle);
             }
         }
 
-        avatarVoiceDTO.setId(id);
-        avatarVoiceDTO.setDailies(dailies);
-        avatarVoiceDTO.setBattles(battles);
-
-        return avatarVoiceDTO;
+        AvatarVoiceDTO dto = new AvatarVoiceDTO();
+        dto.setId(id);
+        dto.setDailies(dailies);
+        dto.setBattles(battles);
+        return dto;
     }
 
     @Override
     public AvatarConstellationDTO getAvatarConstellations(Integer id) {
-        AvatarConstellationDTO avatarConstellationDTO = new AvatarConstellationDTO();
-        List<AvatarConstellationDTO.Constellation> constellations = new ArrayList<>();
-
         Avatar avatar = avatarRepository.findById(id).orElse(null);
-        if (avatar == null) return null;
+        if (avatar == null) {
+            return null;
+        }
 
-        // 命座顺序由技能仓库的 talents 数组决定，下标 0–5 即 1–6 命
-        AvatarSkillDepot avatarSkillDepot =
-                avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
-        if (avatarSkillDepot != null && avatarSkillDepot.getTalents() != null) {
-            List<Integer> talentIds = new ArrayList<>();
-            for (Integer talentId : avatarSkillDepot.getTalents()) {
-                // talents 末尾有 0 占位，跳过
-                if (talentId == null || talentId == 0) continue;
-                talentIds.add(talentId);
-            }
-
-            Map<Integer, AvatarTalent> talentMap = new HashMap<>();
-            if (!talentIds.isEmpty()) {
-                avatarTalentRepository.findByIdIn(talentIds).forEach(t -> talentMap.put(t.getId(), t));
-            }
+        List<AvatarConstellationDTO.Constellation> constellations = new ArrayList<>();
+        AvatarSkillDepot depot = avatar.getSkillDepotId() == null
+                ? null
+                : avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        if (depot != null && depot.getTalents() != null) {
+            List<Integer> talentIds = depot.getTalents().stream()
+                    .filter(talentId -> talentId != null && talentId != 0)
+                    .toList();
+            Map<Integer, AvatarTalent> talents = avatarTalentRepository.findByIdIn(talentIds).stream()
+                    .collect(Collectors.toMap(
+                            AvatarTalent::getId, talent -> talent, (existing, replacement) -> existing));
+            Map<String, String> texts = textMapChsUtil.getTexts(talents.values().stream()
+                    .flatMap(talent -> java.util.stream.Stream.of(
+                            talent.getNameTextMapHash(), talent.getDescTextMapHash(), talent.getDescExtraTextMapHash()))
+                    .toList());
 
             for (Integer talentId : talentIds) {
-                AvatarTalent avatarTalent = talentMap.get(talentId);
-                if (avatarTalent == null) continue;
-
+                AvatarTalent talent = talents.get(talentId);
+                if (talent == null) {
+                    continue;
+                }
                 AvatarConstellationDTO.Constellation constellation = new AvatarConstellationDTO.Constellation();
-                constellation.setId(avatarTalent.getId());
-                constellation.setName(textMapChsUtil.getText(avatarTalent.getNameTextMapHash()));
-                constellation.setDesc(textMapChsUtil.getText(avatarTalent.getDescTextMapHash()));
-                constellation.setDescExtra(textMapChsUtil.getText(avatarTalent.getDescExtraTextMapHash()));
-                constellation.setIconName(avatarTalent.getIcon());
-
+                constellation.setId(talent.getId());
+                constellation.setName(texts.get(talent.getNameTextMapHash()));
+                constellation.setDesc(texts.get(talent.getDescTextMapHash()));
+                constellation.setDescExtra(texts.get(talent.getDescExtraTextMapHash()));
+                constellation.setIconName(talent.getIcon());
                 constellations.add(constellation);
             }
         }
 
-        avatarConstellationDTO.setId(id);
-        avatarConstellationDTO.setConstellations(constellations);
-
-        return avatarConstellationDTO;
+        AvatarConstellationDTO dto = new AvatarConstellationDTO();
+        dto.setId(id);
+        dto.setConstellations(constellations);
+        return dto;
     }
 
     @Override
     public AvatarSkillDTO getAvatarSkills(Integer id) {
-        AvatarSkillDTO avatarSkillDTO = new AvatarSkillDTO();
+        Avatar avatar = avatarRepository.findById(id).orElse(null);
+        if (avatar == null) {
+            return null;
+        }
+
         List<AvatarSkillDTO.CombatSkill> combatSkills = new ArrayList<>();
         List<AvatarSkillDTO.PassiveSkill> passiveSkills = new ArrayList<>();
         List<AvatarSkillDTO.SpecialProudSkill> specialProudSkills = new ArrayList<>();
 
-        Avatar avatar = avatarRepository.findById(id).orElse(null);
-        if (avatar == null) return null;
-
-        AvatarSkillDepot avatarSkillDepot =
-                avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
-        if (avatarSkillDepot != null) {
-
-            // energySkill 为元素爆发
-            Integer energySkillId = avatarSkillDepot.getEnergySkill();
-
-            // 主动技能：skills 里是普攻、战技及霰步这类附属技能，元素爆发单独在 energySkill 里
+        AvatarSkillDepot depot = avatar.getSkillDepotId() == null
+                ? null
+                : avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
+        if (depot != null) {
             List<Integer> skillIds = new ArrayList<>();
-            if (avatarSkillDepot.getSkills() != null) {
-                for (Integer skillId : avatarSkillDepot.getSkills()) {
-                    // skills 末尾有 0 占位，跳过
-                    if (skillId == null || skillId == 0) continue;
-                    // 跳过 ID 大于五位数的技能
-                    if (skillId >= 100000) continue;
-                    // 跳过部分特殊技能
-                    if (EXCLUDED_SKILL_IDS.contains(skillId)) continue;
-
+            if (depot.getSkills() != null) {
+                for (Integer skillId : depot.getSkills()) {
+                    if (skillId == null || skillId == 0) {
+                        continue;
+                    }
+                    if (skillId >= 100000 || EXCLUDED_SKILL_IDS.contains(skillId)) {
+                        continue;
+                    }
                     skillIds.add(skillId);
                 }
             }
-            if (energySkillId != null && energySkillId != 0 && !skillIds.contains(energySkillId)) {
-                skillIds.add(energySkillId);
+            if (depot.getEnergySkill() != null
+                    && depot.getEnergySkill() != 0
+                    && !skillIds.contains(depot.getEnergySkill())) {
+                skillIds.add(depot.getEnergySkill());
             }
 
-            for (Integer skillId : skillIds) {
-                AvatarSkill avatarSkill =
-                        avatarSkillRepository.findById(skillId).orElse(null);
-                if (avatarSkill == null) continue;
+            Map<Integer, AvatarSkillRepository.AvatarSkillBriefView> skills =
+                    avatarSkillRepository.findBriefByIdIn(skillIds).stream()
+                            .filter(skill -> skill.getId() != null)
+                            .collect(Collectors.toMap(
+                                    AvatarSkillRepository.AvatarSkillBriefView::getId,
+                                    skill -> skill,
+                                    (existing, replacement) -> existing));
 
-                AvatarSkillDTO.CombatSkill combatSkill = new AvatarSkillDTO.CombatSkill();
-                combatSkill.setId(avatarSkill.getId());
-                combatSkill.setName(textMapChsUtil.getText(avatarSkill.getNameTextMapHash()));
-                combatSkill.setDesc(textMapChsUtil.getText(avatarSkill.getDescTextMapHash()));
-                combatSkill.setExtraDesc(textMapChsUtil.getText(avatarSkill.getExtraDescTextMapHash()));
-                combatSkill.setDescExtra(textMapChsUtil.getText(avatarSkill.getDescExtraTextMapHash()));
-                combatSkill.setIconName(avatarSkill.getSkillIcon());
+            Set<Integer> groupIds = getIntegers(skills, depot);
 
-                // 技能数值按天赋组逐级展开，组内等级 1–15 都保留
-                List<AvatarSkillDTO.CombatSkillData> combatSkillDataList = new ArrayList<>();
-                if (avatarSkill.getProudSkillGroupId() != null) {
-                    List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
-                            avatarSkill.getProudSkillGroupId());
-                    for (ProudSkill proudSkill : proudSkills) {
-                        combatSkillDataList.add(buildCombatSkillData(proudSkill));
+            Map<Integer, List<ProudSkill>> proudByGroup = new LinkedHashMap<>();
+            if (!groupIds.isEmpty()) {
+                for (ProudSkill proudSkill :
+                        proudSkillRepository.findByProudSkillGroupIdInOrderByProudSkillGroupIdAscLevelAsc(groupIds)) {
+                    if (proudSkill.getProudSkillGroupId() == null) {
+                        continue;
+                    }
+                    proudByGroup
+                            .computeIfAbsent(proudSkill.getProudSkillGroupId(), key -> new ArrayList<>())
+                            .add(proudSkill);
+                }
+            }
+
+            Set<String> hashes = new LinkedHashSet<>();
+            for (AvatarSkillRepository.AvatarSkillBriefView skill : skills.values()) {
+                hashes.add(skill.getNameTextMapHash());
+                hashes.add(skill.getDescTextMapHash());
+                hashes.add(skill.getExtraDescTextMapHash());
+                hashes.add(skill.getDescExtraTextMapHash());
+            }
+            for (List<ProudSkill> proudSkills : proudByGroup.values()) {
+                for (ProudSkill proudSkill : proudSkills) {
+                    hashes.add(proudSkill.getNameTextMapHash());
+                    hashes.add(proudSkill.getDescTextMapHash());
+                    hashes.add(proudSkill.getDescExtraTextMapHash());
+                    hashes.add(proudSkill.getLoreDescTextMapHash());
+                    if (proudSkill.getParamDescList() != null) {
+                        hashes.addAll(proudSkill.getParamDescList());
                     }
                 }
-                combatSkill.setCombatSkillDataList(combatSkillDataList);
+            }
+            Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
+            for (Integer skillId : skillIds) {
+                AvatarSkillRepository.AvatarSkillBriefView skill = skills.get(skillId);
+                if (skill == null) {
+                    continue;
+                }
+                List<ProudSkill> levels = proudByGroup.getOrDefault(skill.getProudSkillGroupId(), List.of());
+                AvatarSkillDTO.CombatSkill combatSkill = new AvatarSkillDTO.CombatSkill();
+                combatSkill.setId(skill.getId());
+                combatSkill.setName(texts.get(skill.getNameTextMapHash()));
+                combatSkill.setDesc(texts.get(skill.getDescTextMapHash()));
+                combatSkill.setExtraDesc(texts.get(skill.getExtraDescTextMapHash()));
+                combatSkill.setDescExtra(texts.get(skill.getDescExtraTextMapHash()));
+                combatSkill.setLoreDesc(
+                        levels.isEmpty() ? null : texts.get(levels.get(0).getLoreDescTextMapHash()));
+                combatSkill.setIconName(skill.getSkillIcon());
+                combatSkill.setCombatSkillDataList(buildCombatSkillDataList(levels, texts));
                 combatSkills.add(combatSkill);
             }
 
-            // 固有天赋：每个天赋组只取 1 级那条，组里其余等级是升级节点
-            if (avatarSkillDepot.getInherentProudSkillOpens() != null) {
-                for (AvatarSkillDepot.ProudSkillGroup proudSkillGroup : avatarSkillDepot.getInherentProudSkillOpens()) {
-                    if (proudSkillGroup == null || proudSkillGroup.getProudSkillGroupId() == null) continue;
-
-                    List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
-                            proudSkillGroup.getProudSkillGroupId());
-                    for (ProudSkill proudSkill : proudSkills) {
-                        if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
-                        if (EXCLUDED_PASSIVE_SKILL_IDS.contains(proudSkill.getId())) continue;
-
-                        AvatarSkillDTO.PassiveSkill passiveSkill = new AvatarSkillDTO.PassiveSkill();
-                        passiveSkill.setId(proudSkill.getId());
-                        passiveSkill.setName(textMapChsUtil.getText(proudSkill.getNameTextMapHash()));
-                        passiveSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
-                        passiveSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
-                        passiveSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
-                        passiveSkill.setIconName(proudSkill.getIcon());
-
-                        passiveSkills.add(passiveSkill);
-                        break;
-                    }
-                }
-            }
-
-            if (avatarSkillDepot.getSpecialProudSkillGroups() != null) {
-                for (AvatarSkillDepot.SpecialProudSkillGroup specialProudSkillGroup :
-                        avatarSkillDepot.getSpecialProudSkillGroups()) {
-                    if (specialProudSkillGroup == null || specialProudSkillGroup.getProudSkillGroupId() == null)
+            if (depot.getInherentProudSkillOpens() != null) {
+                for (AvatarSkillDepot.InherentProudSkillOpen open : depot.getInherentProudSkillOpens()) {
+                    if (open == null || open.getProudSkillGroupId() == null) {
                         continue;
-
-                    List<ProudSkill> proudSkills = proudSkillRepository.findByProudSkillGroupIdOrderByLevelAsc(
-                            specialProudSkillGroup.getProudSkillGroupId());
-                    for (ProudSkill proudSkill : proudSkills) {
-                        if (proudSkill.getLevel() == null || proudSkill.getLevel() != 1) continue;
-
-                        AvatarSkillDTO.SpecialProudSkill specialProudSkill = new AvatarSkillDTO.SpecialProudSkill();
-                        specialProudSkill.setId(proudSkill.getId());
-                        specialProudSkill.setName(textMapChsUtil.getText(proudSkill.getNameTextMapHash()));
-                        specialProudSkill.setDesc(textMapChsUtil.getText(proudSkill.getDescTextMapHash()));
-                        specialProudSkill.setDescExtra(textMapChsUtil.getText(proudSkill.getDescExtraTextMapHash()));
-                        specialProudSkill.setLoreDesc(textMapChsUtil.getText(proudSkill.getLoreDescTextMapHash()));
-                        specialProudSkill.setIconName(proudSkill.getIcon());
-
-                        specialProudSkills.add(specialProudSkill);
-                        break;
                     }
+                    ProudSkill proudSkill = firstLevelOne(proudByGroup.get(open.getProudSkillGroupId()));
+                    if (proudSkill == null || EXCLUDED_PASSIVE_SKILL_IDS.contains(proudSkill.getId())) {
+                        continue;
+                    }
+                    AvatarSkillDTO.PassiveSkill passiveSkill = new AvatarSkillDTO.PassiveSkill();
+                    passiveSkill.setId(proudSkill.getId());
+                    passiveSkill.setName(texts.get(proudSkill.getNameTextMapHash()));
+                    passiveSkill.setDesc(texts.get(proudSkill.getDescTextMapHash()));
+                    passiveSkill.setDescExtra(texts.get(proudSkill.getDescExtraTextMapHash()));
+                    passiveSkill.setLoreDesc(texts.get(proudSkill.getLoreDescTextMapHash()));
+                    passiveSkill.setIconName(proudSkill.getIcon());
+                    passiveSkills.add(passiveSkill);
+                }
+            }
+
+            if (depot.getSpecialProudSkillOpens() != null) {
+                for (AvatarSkillDepot.SpecialProudSkillOpen open : depot.getSpecialProudSkillOpens()) {
+                    if (open == null || open.getProudSkillGroupId() == null) {
+                        continue;
+                    }
+                    List<ProudSkill> levels = proudByGroup.getOrDefault(open.getProudSkillGroupId(), List.of());
+                    ProudSkill proudSkill = firstLevelOne(levels);
+                    if (proudSkill == null) {
+                        continue;
+                    }
+                    AvatarSkillDTO.SpecialProudSkill specialProudSkill = new AvatarSkillDTO.SpecialProudSkill();
+                    specialProudSkill.setId(proudSkill.getId());
+                    specialProudSkill.setName(texts.get(proudSkill.getNameTextMapHash()));
+                    specialProudSkill.setDesc(texts.get(proudSkill.getDescTextMapHash()));
+                    specialProudSkill.setDescExtra(texts.get(proudSkill.getDescExtraTextMapHash()));
+                    specialProudSkill.setLoreDesc(texts.get(proudSkill.getLoreDescTextMapHash()));
+                    specialProudSkill.setIconName(proudSkill.getIcon());
+                    specialProudSkill.setCombatSkillDataList(buildCombatSkillDataList(levels, texts));
+                    specialProudSkills.add(specialProudSkill);
                 }
             }
         }
 
-        avatarSkillDTO.setId(id);
-        avatarSkillDTO.setCombatSkills(combatSkills);
-        avatarSkillDTO.setPassiveSkills(passiveSkills);
-        avatarSkillDTO.setSpecialProudSkills(specialProudSkills);
-
-        return avatarSkillDTO;
+        AvatarSkillDTO dto = new AvatarSkillDTO();
+        dto.setId(id);
+        dto.setCombatSkills(combatSkills);
+        dto.setPassiveSkills(passiveSkills);
+        dto.setSpecialProudSkills(specialProudSkills);
+        return dto;
     }
 
-    private String toGachaIconName(String icon) {
-        if (icon == null) return null;
-        return "UI_Gacha_AvatarIcon_" + icon.substring("UI_AvatarIcon_".length());
-    }
-
-    private String toGachaImageName(String icon) {
-        if (icon == null) return null;
-        return "UI_Gacha_AvatarImg_" + icon.substring("UI_AvatarIcon_".length());
-    }
-
-    private String toCustomImageName(String name) {
-        if (name == null) return null;
-        return "UI_Costume_" + name.substring("UI_AvatarIcon_".length());
-    }
-
-    private AvatarSkillDTO.CombatSkillData buildCombatSkillData(ProudSkill proudSkill) {
-        AvatarSkillDTO.CombatSkillData combatSkillData = new AvatarSkillDTO.CombatSkillData();
-        combatSkillData.setLevel(proudSkill.getLevel());
-        combatSkillData.setParamList(proudSkill.getParamList());
-
-        // paramDescList 存的是哈希，逐条翻译；解不出的直接跳过
-        List<String> paramDescList = new ArrayList<>();
-        if (proudSkill.getParamDescList() != null) {
-            for (String paramDescHash : proudSkill.getParamDescList()) {
-                String paramDesc = textMapChsUtil.getText(paramDescHash);
-                if (paramDesc != null) paramDescList.add(paramDesc);
+    private static Set<Integer> getIntegers(
+            Map<Integer, AvatarSkillRepository.AvatarSkillBriefView> skills, AvatarSkillDepot depot) {
+        Set<Integer> groupIds = new LinkedHashSet<>();
+        for (AvatarSkillRepository.AvatarSkillBriefView skill : skills.values()) {
+            if (skill.getProudSkillGroupId() != null) {
+                groupIds.add(skill.getProudSkillGroupId());
             }
         }
-        combatSkillData.setParamDescList(paramDescList);
-
-        return combatSkillData;
+        if (depot.getInherentProudSkillOpens() != null) {
+            for (AvatarSkillDepot.InherentProudSkillOpen open : depot.getInherentProudSkillOpens()) {
+                if (open != null && open.getProudSkillGroupId() != null) {
+                    groupIds.add(open.getProudSkillGroupId());
+                }
+            }
+        }
+        if (depot.getSpecialProudSkillOpens() != null) {
+            for (AvatarSkillDepot.SpecialProudSkillOpen open : depot.getSpecialProudSkillOpens()) {
+                if (open != null && open.getProudSkillGroupId() != null) {
+                    groupIds.add(open.getProudSkillGroupId());
+                }
+            }
+        }
+        return groupIds;
     }
 
-    private String translateQuality(String quality) {
-        if (quality == null) return "未知";
-        return switch (quality) {
-            case "QUALITY_ORANGE" -> "五星";
-            case "QUALITY_ORANGE_SP" -> "五星";
-            case "QUALITY_PURPLE" -> "四星";
-            case "QUALITY_BLUE" -> "三星";
-            default -> quality;
+    private List<AvatarSkillDTO.CombatSkillData> buildCombatSkillDataList(
+            List<ProudSkill> proudSkills, Map<String, String> texts) {
+        List<AvatarSkillDTO.CombatSkillData> result = new ArrayList<>();
+        for (ProudSkill proudSkill : proudSkills) {
+            AvatarSkillDTO.CombatSkillData data = new AvatarSkillDTO.CombatSkillData();
+            data.setLevel(proudSkill.getLevel());
+            data.setParamList(proudSkill.getParamList());
+            List<String> paramDescList = new ArrayList<>();
+            if (proudSkill.getParamDescList() != null) {
+                for (String hash : proudSkill.getParamDescList()) {
+                    String text = texts.get(hash);
+                    if (text != null) {
+                        paramDescList.add(text);
+                    }
+                }
+            }
+            data.setParamDescList(paramDescList);
+            result.add(data);
+        }
+        return result;
+    }
+
+    private static ProudSkill firstLevelOne(List<ProudSkill> proudSkills) {
+        if (proudSkills == null) {
+            return null;
+        }
+        for (ProudSkill proudSkill : proudSkills) {
+            if (proudSkill.getLevel() != null && proudSkill.getLevel() == 1) {
+                return proudSkill;
+            }
+        }
+        return null;
+    }
+
+    private static List<String> translateTips(List<String> hashes, Map<String, String> texts) {
+        List<String> tips = new ArrayList<>();
+        if (hashes == null) {
+            return tips;
+        }
+        for (String hash : hashes) {
+            String text = texts.get(hash);
+            if (text != null) {
+                tips.add(text);
+            }
+        }
+        return tips;
+    }
+
+    private Map<Integer, AvatarCurve> avatarCurves() {
+        Map<Integer, AvatarCurve> curves = avatarCurveCache;
+        if (curves == null) {
+            synchronized (this) {
+                curves = avatarCurveCache;
+                if (curves == null) {
+                    curves = avatarCurveRepository.findAll().stream()
+                            .filter(curve -> curve.getLevel() != null)
+                            .collect(Collectors.toMap(
+                                    AvatarCurve::getLevel, curve -> curve, (existing, replacement) -> existing));
+                    avatarCurveCache = curves;
+                }
+            }
+        }
+        return curves;
+    }
+
+    private static double curveValue(AvatarCurve curve, String type) {
+        if (curve == null || curve.getCurves() == null || type == null) {
+            return 0.0;
+        }
+        Double value = curve.getCurves().get(type);
+        return value == null ? 0.0 : value;
+    }
+
+    private static int toPromoteLevel(int level) {
+        if (level >= 80) return 6;
+        if (level >= 70) return 5;
+        if (level >= 60) return 4;
+        if (level >= 50) return 3;
+        if (level >= 40) return 2;
+        if (level >= 20) return 1;
+        return 0;
+    }
+
+    private static String toGachaAvatarIcon(String icon) {
+        if (icon == null) {
+            return null;
+        }
+        return "UI_Gacha_AvatarIcon_" + stripPrefix(icon, "UI_AvatarIcon_");
+    }
+
+    private static String toGachaAvatarImage(String icon) {
+        if (icon == null) {
+            return null;
+        }
+        return "UI_Gacha_AvatarImg_" + stripPrefix(icon, "UI_AvatarIcon_");
+    }
+
+    private static String toCostumeImage(String frontIconName) {
+        if (frontIconName == null) {
+            return null;
+        }
+        return "UI_Costume_" + stripPrefix(frontIconName, "UI_AvatarIcon_");
+    }
+
+    private static String stripPrefix(String value, String prefix) {
+        if (value == null) {
+            return null;
+        }
+        return value.startsWith(prefix) ? value.substring(prefix.length()) : value;
+    }
+
+    private static String orDefault(String value, String defaultValue) {
+        return value == null || value.isEmpty() ? defaultValue : value;
+    }
+
+    private static String toVisionIconName(String assocType, String arkheType) {
+        if (assocType == null || assocType.isEmpty()) {
+            return null;
+        }
+        String key = stripPrefix(assocType, ASSOC_PREFIX);
+        return switch (key) {
+            case "MAINACTOR" -> "UI_Img_Pendant_Player";
+            case "SNEZHNAYA_STAR" -> "UI_Img_Pendant_StellaVision";
+            case "FONTAINE" -> {
+                String arkhe = "Furina".equals(arkheType) ? "Pneuma" : arkheType;
+                if (arkhe == null || arkhe.isEmpty()) {
+                    yield "UI_Img_Pendant_Fontaine";
+                }
+                yield "UI_Img_Pendant_Fontaine_" + capitalize(arkhe);
+            }
+            default -> "UI_Img_Pendant_" + titleCase(key);
         };
     }
 
-    private String translateWeapon(String weapon) {
-        if (weapon == null) return "未知";
-        return switch (weapon) {
-            case "WEAPON_SWORD_ONE_HAND" -> "单手剑";
-            case "WEAPON_CLAYMORE" -> "双手剑";
-            case "WEAPON_POLE" -> "长柄武器";
-            case "WEAPON_BOW" -> "弓";
-            case "WEAPON_CATALYST" -> "法器";
-            case "WEAPON_CROSSBOW" -> "枪";
-            default -> weapon;
-        };
+    private static String toElementIconName(String assocType, String element) {
+        if (element == null || "Unknown".equals(element)) {
+            return null;
+        }
+        String key = stripPrefix(assocType, ASSOC_PREFIX);
+        String prefix =
+                switch (key) {
+                    case "FATUI" -> "Fatui";
+                    case "LIYUE" -> "Liyue";
+                    case "MAINACTOR" -> "Player";
+                    case "RANGER" -> "Ranger";
+                    default -> "Common";
+                };
+        return "UI_Icon_" + prefix + "_" + element;
     }
 
-    private String translateElement(String element) {
-        if (element == null) return "Unknown";
+    private static String titleCase(String value) {
+        String[] parts = value.split("_");
+        StringBuilder builder = new StringBuilder();
+        for (String part : parts) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append('_');
+            }
+            builder.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+            builder.append(part.substring(1).toLowerCase(Locale.ROOT));
+        }
+        return builder.toString();
+    }
+
+    private static String capitalize(String value) {
+        if (value.isEmpty()) {
+            return value;
+        }
+        return value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1);
+    }
+
+    private static String translateElement(String element) {
+        if (element == null) {
+            return null;
+        }
         return switch (element) {
             case "火" -> "Fire";
             case "水" -> "Water";
@@ -733,8 +955,10 @@ public class AvatarServiceImpl implements AvatarService {
         };
     }
 
-    private String translateStat(String stat) {
-        if (stat == null) return "未知";
+    private static String translateStat(String stat) {
+        if (stat == null) {
+            return "未知";
+        }
         return switch (stat) {
             case "FIGHT_PROP_HP_PERCENT" -> "生命值";
             case "FIGHT_PROP_ATTACK_PERCENT" -> "攻击力";
