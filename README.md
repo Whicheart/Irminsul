@@ -1,28 +1,16 @@
 # irminsul
 
-原神角色、武器与圣遗物资料 API。把 MongoDB 里的数据聚合成前端可直接渲染的 JSON。
+游戏百科资料 API。把 MongoDB 里的数据聚合成前端可直接渲染的 JSON。
 
-> 项目仅用于学习与研究；角色、素材名称及相关内容的版权归米哈游（miHoYo / HoYoverse）所有。
+> 本项目仅用于学习与研究。
 
 ## 目录
 
-- [功能](#功能)
 - [技术栈](#技术栈)
 - [快速开始](#快速开始)
 - [配置](#配置)
 - [接口](#接口)
-- [数据模型](#数据模型)
-- [实现约定](#实现约定)
 - [开发](#开发)
-- [已知待办](#已知待办)
-
-## 功能
-
-- **角色列表**：支持按名称模糊匹配、元素、武器、星级过滤，按图鉴 `sortId` 倒序返回。
-- **角色基础信息**：称号、所属（`assocType`）、生日、命之座/神之眼名称、四国 CV、1–100 级生命/攻击/防御成长、突破加成属性、突破与天赋升级材料。
-- **角色详情**：衣装、故事、语音、命之座 1–6、战斗技能/固有天赋/特殊固有天赋及其逐级数值。
-- **武器**：按名称、类型、星级过滤的列表，以及基础信息（白值成长、副属性、精炼描述、突破材料、故事）。
-- **圣遗物**：套装列表、套装效果与部件故事，以及 1–5 星主属性/副词条的数值表。
 
 ## 技术栈
 
@@ -32,7 +20,7 @@
 | 框架      | Spring Boot 4.0.1                                              |
 | 持久化    | Spring Data MongoDB                                            |
 | 接口文档  | springdoc-openapi 3.0.0（Swagger UI）                          |
-| 辅助      | Lombok；Caffeine（已在依赖中，当前未接入缓存）                 |
+| 辅助      | Lombok；Caffeine                                               |
 | 构建/格式 | Maven Wrapper（Maven 3.9.12）、Spotless + palantir-java-format |
 
 ## 快速开始
@@ -41,7 +29,7 @@
 
 - JDK 17 及以上
 - 可访问的 MongoDB，且已完成数据导入
-- 如未完成导入，可通过[脚本](https://github.com/Whicheart/GenshinDataImporter)进行导入
+- 如未完成导入，可通过[脚本](https://github.com/Whicheart/DataImporter)进行导入
 
 ```bash
 git clone <repo-url> irminsul
@@ -87,101 +75,44 @@ git config core.hooksPath .githooks
 | 方法与路径                            | 说明                                                                                                      |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `GET /api/avatar/list`                | 角色列表。可选参数：`name`（模糊包含）、`elements`、`weaponTypes`、`qualityTypes`（可重复传参或逗号分隔） |
-| `GET /api/avatar/{id}/base-info`      | 角色基础信息，含成长曲线与材料                                                                            |
-| `GET /api/avatar/{id}/outfits`        | 衣装列表                                                                                                  |
+| `GET /api/avatar/{id}/base-info`      | 角色基础信息                                                                                              |
+| `GET /api/avatar/{id}/outfits`        | 时装列表                                                                                                  |
 | `GET /api/avatar/{id}/stories`        | 角色故事                                                                                                  |
-| `GET /api/avatar/{id}/voices`         | 语音（`dailies` 日常、`battles` 战斗）                                                                    |
+| `GET /api/avatar/{id}/voices`         | 角色语音                                                                                                  |
 | `GET /api/avatar/{id}/constellations` | 命之座 1–6                                                                                                |
-| `GET /api/avatar/{id}/skills`         | 战斗技能、固有天赋、特殊固有天赋                                                                          |
-| `GET /api/weapon/list`                | 武器列表。可选参数：`name`、`weaponTypes`、`ranks`（星级 1–5）                                            |
-| `GET /api/weapon/{id}/base-info`      | 武器基础信息，含白值成长、副属性、精炼描述、突破材料与故事                                                |
+| `GET /api/avatar/{id}/skills`         | 角色天赋                                                                                                  |
+| `GET /api/weapon/list`                | 武器列表。可选参数：`name`、`weaponTypes`、`ranks`                                                        |
+| `GET /api/weapon/{id}/base-info`      | 武器基础信息                                                                                              |
 | `GET /api/reliquary/list`             | 圣遗物套装列表                                                                                            |
-| `GET /api/reliquary/{id}/base-info`   | 套装效果、包含部件及部件故事（`{id}` 为套装 ID）                                                          |
+| `GET /api/reliquary/{id}/base-info`   | 套装效果、包含部件及部件故事                                                                              |
 | `GET /api/reliquary/prop-rank`        | 1–5 星主属性与副词条的数值表                                                                              |
 
 过滤参数的枚举取值：
 
-- `elements`：`PYRO`、`HYDRO`、`ANEMO`、`ELECTRO`、`DENDRO`、`CRYO`、`GEO`
+- `elements`：`Fire`、`Water`、`Wind`、`Electric`、`Grass`、`Ice`、`Rock`
 - `weaponTypes`：`WEAPON_SWORD_ONE_HAND`、`WEAPON_CLAYMORE`、`WEAPON_POLE`、`WEAPON_BOW`、`WEAPON_CATALYST`
-- `qualityTypes`：`QUALITY_ORANGE`、`QUALITY_PURPLE`
-- `ranks`（武器星级）：`1`–`5`
+- `qualityTypes`：`QUALITY_ORANGE`、`QUALITY_ORANGE_SP`、`QUALITY_PURPLE`
+- `ranks`：`1`–`5`
 
 示例：
 
 ```bash
 curl 'http://localhost:8080/api/avatar/list?name=绫华'
-curl 'http://localhost:8080/api/avatar/list?elements=HYDRO&qualityTypes=QUALITY_ORANGE'
+curl 'http://localhost:8080/api/avatar/list?elements=Water&qualityTypes=QUALITY_ORANGE'
 curl 'http://localhost:8080/api/avatar/10000002/base-info'
 curl 'http://localhost:8080/api/weapon/list?weaponTypes=WEAPON_SWORD_ONE_HAND&ranks=5'
 curl 'http://localhost:8080/api/reliquary/list'
 curl 'http://localhost:8080/api/reliquary/prop-rank'
 ```
 
-## 数据模型
-
-默认库 `GI`，共 39 个集合。当前接口实际读取的：
-
-| 集合                  | 用途                                                           |
-| --------------------- | -------------------------------------------------------------- |
-| `avatar`              | 角色主表：基础白值、图标名、成长曲线、突破组 ID                |
-| `avatar_codex`        | 图鉴排序 `sortId` 与上线时间                                   |
-| `avatar_promote`      | 突破等级、属性加成、突破材料                                   |
-| `avatar_curve`        | 1–90 级成长乘数                                                |
-| `avatar_skill_depot`  | 技能组：`skills`、`energySkill`、`talents`、`inherentProudSkillOpens` |
-| `avatar_skill`        | 技能名称/描述与原始图标                                        |
-| `proud_skill`         | 天赋逐级数值与升级材料                                         |
-| `avatar_talent`       | 命之座名称与文案                                               |
-| `avatar_costume`      | 衣装                                                           |
-| `fetter_info`         | 角色资料：生日、阵营、神之眼、CV                               |
-| `fetter_story`        | 角色故事                                                       |
-| `fetters`             | 语音（`type` 1 日常、2 战斗）                                  |
-| `material`            | 材料名称                                                       |
-| `text_map_chs_medium` | 文本哈希表，`hash → 中文文本`                                  |
-
-已建模但暂未接入接口：`avatar_ability`、`avatar_fetters_level`、`avatar_level`、`avatar_trace_effect`、`attack_attenuation`、`fetter_character_card`、`material_codex`、`material_source_data`、`text_map_en_medium`。
-
-武器接口使用的集合：`weapon`、`weapon_codex`、`weapon_promote`、`weapon_curve`、`weapon_story`、`equip_affix`、`material`；`weapon_level` 已建模但暂未使用。
-
-圣遗物接口使用的集合：`reliquary`、`reliquary_set`、`reliquary_level`、`reliquary_affix`、`reliquary_story`、`equip_affix`。其余圣遗物集合（`reliquary_affix_normalized_param`、`reliquary_codex`、`reliquary_main_prop`、`reliquary_wear_append_prop`、`reliquary_wear_main_prop`）已建模但暂未使用。
-
-## 实现约定
-
-- **只读**：服务不写入数据库。
-- **角色范围**：仅保留 `id` 在 `10000002`–`10000899` 之间的角色，目前排除旅行者与奇偶。
-- **技能过滤**：跳过 `id ≥ 100000` 的技能，跳过 `30506`、`11076` 两个特殊技能，固有天赋跳过 `522301`。
-- **列表排除项**：武器排除 `11419`、`11420`、`11421`、`11429`、`12304`、`13304`、`14306`、`15306`（缺少图鉴排序等数据）；圣遗物套装排除 `15000`、`15004`、`15012`（缺少套装效果或文本）。
-- **图标名**：命之座、技能、天赋、圣遗物、材料直接透传数据中的 `icon` 字段，以下为需要拼前缀的几处：
-    - 角色列表 `GachaIconName`：`UI_Gacha_AvatarIcon_<icon 去掉 UI_AvatarIcon_ 前缀>`
-    - 角色立绘 `gachaImageName`：`UI_Gacha_AvatarImg_<同上>`
-    - 衣装 `imageName`：`UI_Costume_<frontIcon 去掉 UI_AvatarIcon_ 前缀>`
-    - 武器 `GachaCardName`：`UI_Gacha_EquipIcon_<icon 去掉 UI_EquipIcon_ 前缀>`；`iconName` 为原始 `icon`
-    - 圣遗物 `setIconName`、部件 `iconName`：分别取 `reliquary_set.setIcon`、`reliquary.icon`
-- **文本翻译**：所有 `*TextMapHash` 字段经 `text_map_chs_medium` 解析，结果缓存在进程内 `ConcurrentHashMap`。
-- **富文本**：描述中保留 `<color=#...>` 等游戏内标记，需要前端自行解析。
-- **JSON 格式**：开启 `indent-output`，字段按字母序输出；`GachaIconName`（角色）、`GachaCardName`（武器）首字母大写，前端取值时注意大小写。
-
 ## 开发
 
 ```bash
 ./mvnw test              # 目前仅 contextLoads，连接信息取自同一份配置
-./mvnw spotless:apply    # 格式化（palantir-java-format）
+./mvnw spotless:apply    # 格式化
 ./mvnw verify            # 会执行 spotless:check，格式不合规即失败
 ```
 
 代码风格由 `.editorconfig` 约定：UTF-8、LF、4 空格缩进（`yml`/`xml`/`json` 为 2 空格），`.cmd` 使用 CRLF。
 
 提交前会扫描暂存区的密钥特征，启用与绕过方式见 [.githooks/README.md](.githooks/README.md)。
-
-## 已知待办
-
-**功能性**
-- 旅行者、奇偶的角色信息。
-- 三深渊、卡池等信息。
-- 武器精炼等级以外的细节（如 `weapon_level`）、圣遗物词条的成长曲线。
-- 技能更详细的信息，如削韧、抗打断、附着情况、判定范围、攻击类型等。
-
-**非功能性**
-- CORS 仍为开发期白名单（`localhost:5173`、`localhost:3000`）。
-- 未接入的集合对应能力尚缺：角色属性详情、技能等级、材料来源、英文文本。
-- Caffeine 已引入但未使用，热点数据（如 `text_map` 全量、角色列表）可考虑加缓存层。
-- 认证与鉴权未启用：`spring-boot-starter-security`、JJWT 依赖在 `pom.xml` 中处于注释状态。
