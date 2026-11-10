@@ -1,8 +1,7 @@
 package com.genshin.irminsul.dto;
 
-import lombok.Data;
-
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class ReliquarySetList {
