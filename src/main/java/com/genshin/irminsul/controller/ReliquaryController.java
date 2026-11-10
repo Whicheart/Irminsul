@@ -2,8 +2,8 @@ package com.genshin.irminsul.controller;
 
 import com.genshin.irminsul.common.Result;
 import com.genshin.irminsul.dto.ReliquaryBaseInfoDTO;
-import com.genshin.irminsul.dto.ReliquaryList;
 import com.genshin.irminsul.dto.ReliquaryPropRankDTO;
+import com.genshin.irminsul.dto.ReliquarySetList;
 import com.genshin.irminsul.service.ReliquaryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class ReliquaryController {
     private final ReliquaryService reliquaryService;
 
     @GetMapping("/list")
-    public Result<List<ReliquaryList>> getList() {
+    public Result<List<ReliquarySetList.RelicSetBrief>> getList() {
         return Result.ok(reliquaryService.getReliquaryList());
     }
 
