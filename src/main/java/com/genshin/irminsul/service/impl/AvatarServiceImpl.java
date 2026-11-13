@@ -912,6 +912,7 @@ public class AvatarServiceImpl implements AvatarService {
                     case "LIYUE" -> "Liyue";
                     case "MAINACTOR" -> "Player";
                     case "RANGER" -> "Ranger";
+                    case "SNEZHNAYA_STAR" -> "Ranger";
                     default -> "Common";
                 };
         return "UI_Icon_" + prefix + "_" + element;

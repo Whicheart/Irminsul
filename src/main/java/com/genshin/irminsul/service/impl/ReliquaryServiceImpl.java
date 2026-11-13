@@ -30,9 +30,16 @@ public class ReliquaryServiceImpl implements ReliquaryService {
     private final TextMapChsUtil textMapChsUtil;
 
     @Override
-    public List<ReliquarySetList.RelicSetBrief> getReliquaryList() {
+    public List<ReliquarySetList.RelicSetBrief> getReliquaryList(String name, List<Integer> ranks) {
+        String nameFilter = name == null ? null : name.trim();
+        if (nameFilter != null && nameFilter.isEmpty()) {
+            nameFilter = null;
+        }
+        List<Integer> rankFilter = ranks == null || ranks.isEmpty() ? null : ranks;
+
         List<ReliquarySet> sets = reliquarySetRepository.findAll().stream()
                 .filter(set -> set.getId() != null && !EXCLUDED_SET_IDS.contains(set.getId()))
+                .filter(set -> rankFilter == null || rankFilter.contains(set.getMaxRankLevel()))
                 .sorted(Comparator.comparing(
                                 ReliquarySet::getMaxRankLevel, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(ReliquarySet::getId, Comparator.reverseOrder()))
@@ -57,11 +64,15 @@ public class ReliquaryServiceImpl implements ReliquaryService {
 
         List<ReliquarySetList.RelicSetBrief> result = new ArrayList<>();
         for (ReliquarySet set : sets) {
-            ReliquarySetList.RelicSetBrief brief = new ReliquarySetList.RelicSetBrief();
-            brief.setSetId(set.getId());
             EquipAffix affix = set.getEquipAffixId() == null ? null : affixById.get(set.getEquipAffixId());
             EquipAffix.AffixLevel first = affix == null ? null : firstAffixLevel(affix);
-            brief.setName(first == null ? null : texts.get(first.getNameTextMapHash()));
+            String setName = first == null ? null : texts.get(first.getNameTextMapHash());
+            if (nameFilter != null && (setName == null || !setName.contains(nameFilter))) {
+                continue;
+            }
+            ReliquarySetList.RelicSetBrief brief = new ReliquarySetList.RelicSetBrief();
+            brief.setSetId(set.getId());
+            brief.setName(setName);
             brief.setMaxRankLevel(set.getMaxRankLevel());
             brief.setSetIconName(set.getSetIcon());
             result.add(brief);
