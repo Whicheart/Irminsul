@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,8 +20,9 @@ public class ReliquaryController {
     private final ReliquaryService reliquaryService;
 
     @GetMapping("/list")
-    public Result<List<ReliquarySetList.RelicSetBrief>> getList() {
-        return Result.ok(reliquaryService.getReliquaryList());
+    public Result<List<ReliquarySetList.RelicSetBrief>> getList(
+            @RequestParam(required = false) String name, @RequestParam(required = false) List<Integer> ranks) {
+        return Result.ok(reliquaryService.getReliquaryList(name, ranks));
     }
 
     @GetMapping("/prop-rank")
