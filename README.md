@@ -83,7 +83,7 @@ git config core.hooksPath .githooks
 | `GET /api/avatar/{id}/skills`         | 角色天赋                                                                                                  |
 | `GET /api/weapon/list`                | 武器列表。可选参数：`name`、`weaponTypes`、`ranks`                                                        |
 | `GET /api/weapon/{id}/base-info`      | 武器基础信息                                                                                              |
-| `GET /api/reliquary/list`             | 圣遗物套装列表                                                                                            |
+| `GET /api/reliquary/list`             | 圣遗物套装列表。可选参数：`name`（模糊包含）、`ranks`                                                      |
 | `GET /api/reliquary/{id}/base-info`   | 套装效果、包含部件及部件故事                                                                              |
 | `GET /api/reliquary/prop-rank`        | 1–5 星主属性与副词条的数值表                                                                              |
 
@@ -102,6 +102,7 @@ curl 'http://localhost:8080/api/avatar/list?elements=Water&qualityTypes=QUALITY_
 curl 'http://localhost:8080/api/avatar/10000002/base-info'
 curl 'http://localhost:8080/api/weapon/list?weaponTypes=WEAPON_SWORD_ONE_HAND&ranks=5'
 curl 'http://localhost:8080/api/reliquary/list'
+curl 'http://localhost:8080/api/reliquary/list?name=行者&ranks=4'
 curl 'http://localhost:8080/api/reliquary/prop-rank'
 ```
 
