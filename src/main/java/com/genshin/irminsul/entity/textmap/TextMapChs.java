@@ -1,4 +1,4 @@
-package com.genshin.irminsul.entity;
+package com.genshin.irminsul.entity.textmap;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -6,8 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
-@Document(collection = "text_map_chs_medium")
-public class TextMapChsMedium {
+@Document(collection = "text_map_chs")
+public class TextMapChs implements TextMapEntry {
 
     @Id
     private String id;
