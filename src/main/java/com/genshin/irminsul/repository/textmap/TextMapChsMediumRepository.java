@@ -1,6 +1,6 @@
-package com.genshin.irminsul.repository;
+package com.genshin.irminsul.repository.textmap;
 
-import com.genshin.irminsul.entity.TextMapChsMedium;
+import com.genshin.irminsul.entity.textmap.TextMapChsMedium;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
