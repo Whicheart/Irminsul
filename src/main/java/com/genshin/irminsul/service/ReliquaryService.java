@@ -1,8 +1,8 @@
 package com.genshin.irminsul.service;
 
-import com.genshin.irminsul.dto.ReliquaryBaseInfoDTO;
-import com.genshin.irminsul.dto.ReliquaryPropRankDTO;
-import com.genshin.irminsul.dto.ReliquarySetList;
+import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoDTO;
+import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankDTO;
+import com.genshin.irminsul.dto.reliquary.ReliquarySetList;
 import java.util.List;
 
 public interface ReliquaryService {

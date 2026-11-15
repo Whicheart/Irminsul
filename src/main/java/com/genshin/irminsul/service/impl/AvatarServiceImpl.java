@@ -1,8 +1,17 @@
 package com.genshin.irminsul.service.impl;
 
-import com.genshin.irminsul.dto.*;
+import com.genshin.irminsul.dto.avatar.*;
 import com.genshin.irminsul.entity.*;
+import com.genshin.irminsul.entity.avatar.*;
+import com.genshin.irminsul.entity.fetter.FetterInfo;
+import com.genshin.irminsul.entity.fetter.FetterStory;
+import com.genshin.irminsul.entity.fetter.Fetters;
 import com.genshin.irminsul.repository.*;
+import com.genshin.irminsul.repository.avatar.*;
+import com.genshin.irminsul.repository.fetter.FetterInfoRepository;
+import com.genshin.irminsul.repository.fetter.FetterStoryRepository;
+import com.genshin.irminsul.repository.fetter.FettersRepository;
+import com.genshin.irminsul.repository.material.MaterialRepository;
 import com.genshin.irminsul.service.AvatarService;
 import com.genshin.irminsul.util.TextMapChsUtil;
 import java.util.*;

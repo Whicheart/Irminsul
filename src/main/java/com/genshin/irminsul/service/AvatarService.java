@@ -1,6 +1,6 @@
 package com.genshin.irminsul.service;
 
-import com.genshin.irminsul.dto.*;
+import com.genshin.irminsul.dto.avatar.*;
 import java.util.List;
 
 public interface AvatarService {

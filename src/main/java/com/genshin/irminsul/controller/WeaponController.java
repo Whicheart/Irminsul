@@ -1,8 +1,8 @@
 package com.genshin.irminsul.controller;
 
 import com.genshin.irminsul.common.Result;
-import com.genshin.irminsul.dto.WeaponBaseInfoDTO;
-import com.genshin.irminsul.dto.WeaponList;
+import com.genshin.irminsul.dto.weapon.WeaponBaseInfoDTO;
+import com.genshin.irminsul.dto.weapon.WeaponList;
 import com.genshin.irminsul.service.WeaponService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
