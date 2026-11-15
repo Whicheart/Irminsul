@@ -1,9 +1,15 @@
 package com.genshin.irminsul.service.impl;
 
-import com.genshin.irminsul.dto.WeaponBaseInfoDTO;
-import com.genshin.irminsul.dto.WeaponList;
+import com.genshin.irminsul.dto.weapon.WeaponBaseInfoDTO;
+import com.genshin.irminsul.dto.weapon.WeaponList;
 import com.genshin.irminsul.entity.*;
+import com.genshin.irminsul.entity.weapon.Weapon;
+import com.genshin.irminsul.entity.weapon.WeaponCurve;
+import com.genshin.irminsul.entity.weapon.WeaponPromote;
+import com.genshin.irminsul.entity.weapon.WeaponStory;
 import com.genshin.irminsul.repository.*;
+import com.genshin.irminsul.repository.material.MaterialRepository;
+import com.genshin.irminsul.repository.weapon.*;
 import com.genshin.irminsul.service.WeaponService;
 import com.genshin.irminsul.util.TextMapChsUtil;
 import java.util.*;

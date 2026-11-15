@@ -1,0 +1,18 @@
+package com.genshin.irminsul.entity.reliquary;
+
+import java.util.List;
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+@Data
+@Document(collection = "relic_story")
+public class ReliquaryStory {
+
+    @Id
+    private Integer id;
+
+    @Field("stories")
+    private List<List<String>> stories;
+}

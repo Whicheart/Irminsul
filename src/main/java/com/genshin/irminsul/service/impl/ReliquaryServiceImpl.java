@@ -1,10 +1,12 @@
 package com.genshin.irminsul.service.impl;
 
-import com.genshin.irminsul.dto.ReliquaryBaseInfoDTO;
-import com.genshin.irminsul.dto.ReliquaryPropRankDTO;
-import com.genshin.irminsul.dto.ReliquarySetList;
+import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoDTO;
+import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankDTO;
+import com.genshin.irminsul.dto.reliquary.ReliquarySetList;
 import com.genshin.irminsul.entity.*;
+import com.genshin.irminsul.entity.reliquary.*;
 import com.genshin.irminsul.repository.*;
+import com.genshin.irminsul.repository.reliquary.*;
 import com.genshin.irminsul.service.ReliquaryService;
 import com.genshin.irminsul.util.TextMapChsUtil;
 import java.util.*;

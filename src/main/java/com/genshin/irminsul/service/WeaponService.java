@@ -1,7 +1,7 @@
 package com.genshin.irminsul.service;
 
-import com.genshin.irminsul.dto.WeaponBaseInfoDTO;
-import com.genshin.irminsul.dto.WeaponList;
+import com.genshin.irminsul.dto.weapon.WeaponBaseInfoDTO;
+import com.genshin.irminsul.dto.weapon.WeaponList;
 import java.util.List;
 
 public interface WeaponService {

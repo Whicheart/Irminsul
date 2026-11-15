@@ -1,7 +1,7 @@
 package com.genshin.irminsul.controller;
 
 import com.genshin.irminsul.common.Result;
-import com.genshin.irminsul.dto.*;
+import com.genshin.irminsul.dto.avatar.*;
 import com.genshin.irminsul.service.AvatarService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
