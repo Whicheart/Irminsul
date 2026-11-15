@@ -1,7 +1,8 @@
 package com.genshin.irminsul.util;
 
-import com.genshin.irminsul.entity.TextMapChsMedium;
-import com.genshin.irminsul.repository.TextMapChsMediumRepository;
+import com.genshin.irminsul.entity.textmap.TextMapEntry;
+import com.genshin.irminsul.repository.textmap.TextMapChsMediumRepository;
+import com.genshin.irminsul.repository.textmap.TextMapChsRepository;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.ArrayList;
@@ -11,22 +12,25 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TextMapChsUtil {
-    // 单次 findByIdIn 的 id 数量上限，避免请求过大
+    // 单次 findByIdIn 的数量上限
     private static final int BATCH_SIZE = 500;
 
-    // 负缓存哨兵：区分“查过但不存在”和“还没查过”
+    // 负缓存区分
     private static final String MISSING = "";
 
-    private final TextMapChsMediumRepository textMapRepository;
+    private final TextMapChsMediumRepository mediumRepository;
+    private final TextMapChsRepository chsRepository;
     private final Cache<String, String> textCache =
             Caffeine.newBuilder().maximumSize(200_000).build();
 
-    public TextMapChsUtil(TextMapChsMediumRepository textMapRepository) {
-        this.textMapRepository = textMapRepository;
+    public TextMapChsUtil(TextMapChsMediumRepository mediumRepository, TextMapChsRepository chsRepository) {
+        this.mediumRepository = mediumRepository;
+        this.chsRepository = chsRepository;
     }
 
     public String getText(String hash) {
@@ -58,9 +62,12 @@ public class TextMapChsUtil {
         List<String> keys = new ArrayList<>(pending);
         for (int start = 0; start < keys.size(); start += BATCH_SIZE) {
             List<String> chunk = keys.subList(start, Math.min(start + BATCH_SIZE, keys.size()));
-            Map<String, String> found = new HashMap<>();
-            for (TextMapChsMedium medium : textMapRepository.findByIdIn(chunk)) {
-                found.put(medium.getId(), medium.getText());
+            // Medium -> CHS -> 缺失
+            Map<String, String> found = query(mediumRepository::findByIdIn, chunk);
+            List<String> notInMedium =
+                    chunk.stream().filter(key -> !found.containsKey(key)).toList();
+            if (!notInMedium.isEmpty()) {
+                found.putAll(query(chsRepository::findByIdIn, notInMedium));
             }
             for (String key : chunk) {
                 String text = found.get(key);
@@ -74,6 +81,15 @@ public class TextMapChsUtil {
             }
         }
         return result;
+    }
+
+    private static Map<String, String> query(
+            Function<Collection<String>, List<? extends TextMapEntry>> loader, List<String> chunk) {
+        Map<String, String> found = new HashMap<>();
+        for (TextMapEntry entry : loader.apply(chunk)) {
+            found.put(entry.getId(), entry.getText());
+        }
+        return found;
     }
 
     private static boolean isValid(String hash) {
