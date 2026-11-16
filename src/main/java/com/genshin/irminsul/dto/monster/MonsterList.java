@@ -14,6 +14,7 @@ public class MonsterList {
         private Integer id;
 
         private String name;
+        private String type;
         private String iconName;
     }
 }
