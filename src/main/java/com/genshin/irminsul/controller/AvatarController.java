@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/avatar")
 public class AvatarController {
+
     private final AvatarService avatarService;
 
     @GetMapping("/list")

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class WeaponServiceImpl implements WeaponService {
+
     private static final int MAX_LEVEL = 100;
     private static final int MAX_PROMOTE_LEVEL = 6;
 

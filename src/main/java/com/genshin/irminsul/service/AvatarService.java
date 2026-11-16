@@ -4,6 +4,7 @@ import com.genshin.irminsul.dto.avatar.*;
 import java.util.List;
 
 public interface AvatarService {
+
     List<AvatarList.AvatarBrief> getAvatarList(
             String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes);
 

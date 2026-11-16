@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/reliquary")
 public class ReliquaryController {
+
     private final ReliquaryService reliquaryService;
 
     @GetMapping("/list")

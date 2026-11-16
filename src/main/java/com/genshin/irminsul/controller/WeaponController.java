@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/weapon")
 public class WeaponController {
+
     private final WeaponService weaponService;
 
     @GetMapping("/list")

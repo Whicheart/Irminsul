@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ReliquaryServiceImpl implements ReliquaryService {
+
     // 15000 号套装缺少 equipAffixId 与文本，15004/15012 无可用故事
     private static final Set<Integer> EXCLUDED_SET_IDS = Set.of(15000, 15004, 15012);
 
