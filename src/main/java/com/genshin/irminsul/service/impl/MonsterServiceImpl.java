@@ -33,7 +33,7 @@ public class MonsterServiceImpl implements MonsterService {
     private static final Set<Integer> EXCLUDED_MONSTER_IDS = Set.of();
 
     @Override
-    public List<MonsterList.MonsterBrief> getMonsterList(String name, List<String> type) {
+    public List<MonsterList.MonsterBrief> getMonsterList(String name, List<String> types) {
         // 以图鉴条目为数据源，按 sortOrder 升序排列
         List<AnimalCodex> codexes = animalCodexRepository.findAll().stream()
                 .filter(codex -> CODEX_TYPE_MONSTER.equals(codex.getType()))
@@ -63,9 +63,9 @@ public class MonsterServiceImpl implements MonsterService {
         Map<String, String> names = textMapChsUtil.getTexts(nameHashes);
 
         String nameKeyword = name == null ? null : name.trim();
-        Set<String> typeFilter = type == null
+        Set<String> typeFilter = types == null
                 ? new HashSet<>()
-                : type.stream()
+                : types.stream()
                         .filter(Objects::nonNull)
                         .map(String::trim)
                         .filter(value -> !value.isEmpty())
