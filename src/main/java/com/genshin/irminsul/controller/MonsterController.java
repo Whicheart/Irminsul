@@ -19,7 +19,7 @@ public class MonsterController {
 
     @GetMapping("/list")
     public Result<List<MonsterList.MonsterBrief>> getList(
-            @RequestParam(required = false) String name, @RequestParam(required = false) List<String> type) {
-        return Result.ok(monsterService.getMonsterList(name, type));
+            @RequestParam(required = false) String name, @RequestParam(required = false) List<String> types) {
+        return Result.ok(monsterService.getMonsterList(name, types));
     }
 }
