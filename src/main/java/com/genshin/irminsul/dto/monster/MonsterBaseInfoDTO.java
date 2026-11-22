@@ -4,15 +4,15 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class MonsterBaseInfo {
+public class MonsterBaseInfoDTO {
 
     private Integer id;
 
     // 名字
     private String title;
     private String name;
-    private String specialName;
-    private String description;
+    private List<String> specialName;
+    private List<String> description;
 
     // 三维
     private List<Double> hp;
