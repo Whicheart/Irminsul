@@ -28,6 +28,12 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * 敌对生物业务实现
+ *
+ * <p>以 animal_codex、monster、monster_describe 为主链路，血量/攻击/防御按
+ * 基础值乘成长曲线计算，并分别用 MHP/MATK 曲线封顶
+ */
 @Service
 @RequiredArgsConstructor
 public class MonsterServiceImpl implements MonsterService {
@@ -45,19 +51,36 @@ public class MonsterServiceImpl implements MonsterService {
     private static final String CURVE_MHP = "GROW_CURVE_MHP";
     private static final String CURVE_MATK = "GROW_CURVE_MATK";
 
+    // 生物图鉴仓储，提供列表与排序
     private final AnimalCodexRepository animalCodexRepository;
+    // 生物数值仓储
     private final MonsterRepository monsterRepository;
+    // 生物描述仓储，提供称号与特殊名
     private final MonsterDescribeRepository monsterDescribeRepository;
+    // 生物称号仓储
     private final MonsterTitleRepository monsterTitleRepository;
+    // 生物特殊名仓储
     private final MonsterSpecialNameRepository monsterSpecialNameRepository;
+    // 生物成长曲线仓储
     private final MonsterCurveRepository monsterCurveRepository;
+    // 文本哈希解析工具
     private final TextMapChsUtil textMapChsUtil;
 
     // 排除，可以考虑填入 25010101, 25020101, 25030101, 25040101
     private static final Set<Integer> EXCLUDED_MONSTER_IDS = Set.of();
 
+    // 成长曲线缓存，整表只读，双重检查锁初始化
     private volatile List<MonsterCurve> curveCache;
 
+    /**
+     * 查询敌对生物列表
+     *
+     * <p>以动物图鉴为源，按图鉴排序号升序
+     *
+     * @param name  名称关键词，可选
+     * @param types 图鉴子类型，可选；为空返回全部
+     * @return 敌对生物简要列表
+     */
     @Override
     public List<MonsterList.MonsterBrief> getMonsterList(String name, List<String> types) {
         // 以图鉴条目为数据源，按 sortOrder 升序排列
@@ -122,15 +145,22 @@ public class MonsterServiceImpl implements MonsterService {
         return result;
     }
 
+    /**
+     * 组装敌对生物基础信息
+     *
+     * <p>先经图鉴取描述与称号，再按成长曲线逐级计算生命、攻击与防御；数据缺失时返回 null
+     *
+     * @param id 敌对生物 ID
+     * @return 详情，不存在时为 null
+     */
     @Override
     public MonsterBaseInfoDTO getMonsterBaseInfo(Integer id) {
 
         MonsterBaseInfoDTO dto = new MonsterBaseInfoDTO();
         dto.setId(id);
 
-        // 已知问题
-        // 1. 22110401、23080101、29091001、29091101 在 monster 表中不存在。处理方式：个人倾向于直接返回 null
-        // 2. 29010101、29010103 的 propGrowCurves 字段为空数组。处理方式：个人倾向于采用默认的 GROW_CURVE_HP/ATTACK/DEFENSE 值进行兜底处理
+        // 22110401、23080101、29091001、29091101 在 monster 表中不存在。处理方式：个人倾向于直接返回 null
+        // 29010101、29010103 的 propGrowCurves 字段为空数组。处理方式：个人倾向于采用默认的 GROW_CURVE_HP/ATTACK/DEFENSE 值进行兜底处理
         AnimalCodex codex = animalCodexRepository.findById(id).orElse(null);
         if (codex == null) {
             return null;
@@ -236,6 +266,9 @@ public class MonsterServiceImpl implements MonsterService {
         return dto;
     }
 
+    /**
+     * 在怪物的成长曲线配置中查找属性对应的曲线名，找不到时使用兜底值
+     */
     private String findCurveName(Monster monster, String propType, String fallback) {
         if (monster.getPropGrowCurves() != null) {
             for (Monster.PropGrowCurve propGrowCurve : monster.getPropGrowCurves()) {
@@ -250,6 +283,14 @@ public class MonsterServiceImpl implements MonsterService {
         return fallback;
     }
 
+    /**
+     * 按成长曲线逐级计算数值，可选上限曲线用于封顶
+     *
+     * @param base      基础值
+     * @param curveName 属性成长曲线名
+     * @param capName   上限曲线名，可为 null
+     * @return 逐级数值，顺序与曲线表一致
+     */
     private List<Double> buildCurveValues(Double base, String curveName, String capName) {
         if (base == null) {
             return List.of();
@@ -270,6 +311,9 @@ public class MonsterServiceImpl implements MonsterService {
         return values;
     }
 
+    /**
+     * 懒加载全部怪物成长曲线，使用双重检查锁保证只查库一次
+     */
     private List<MonsterCurve> getCurveCache() {
         List<MonsterCurve> cache = curveCache;
         if (cache == null) {

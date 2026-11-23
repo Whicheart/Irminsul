@@ -14,6 +14,12 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * 圣遗物业务实现
+ *
+ * <p>套装数据来自 reliquary_set 与 equip_affix；星级 1~5 的主属性取自
+ * reliquary_level，副词条按 depotId 首位数字匹配星级
+ */
 @Service
 @RequiredArgsConstructor
 public class ReliquaryServiceImpl implements ReliquaryService {
@@ -24,14 +30,30 @@ public class ReliquaryServiceImpl implements ReliquaryService {
     // 火抗未实装
     private static final String FIRE_SUB_HURT = "FIGHT_PROP_FIRE_SUB_HURT";
 
+    // 圣遗物套装仓储
     private final ReliquarySetRepository reliquarySetRepository;
+    // 单件圣遗物仓储
     private final ReliquaryRepository reliquaryRepository;
+    // 圣遗物故事仓储
     private final ReliquaryStoryRepository reliquaryStoryRepository;
+    // 套装效果仓储
     private final EquipAffixRepository equipAffixRepository;
+    // 圣遗物等级主属性仓储
     private final ReliquaryLevelRepository reliquaryLevelRepository;
+    // 圣遗物副词条仓储
     private final ReliquaryAffixRepository reliquaryAffixRepository;
+    // 文本哈希解析工具
     private final TextMapChsUtil textMapChsUtil;
 
+    /**
+     * 查询圣遗物套装列表
+     *
+     * <p>以套装配置为源，按最高星级与 ID 倒序，名称取套装效果第一档
+     *
+     * @param name  名称关键词，可选
+     * @param ranks 星级筛选，可选
+     * @return 套装简要列表
+     */
     @Override
     public List<ReliquarySetList.RelicSetBrief> getReliquaryList(String name, List<Integer> ranks) {
         String nameFilter = name == null ? null : name.trim();
@@ -83,6 +105,14 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         return result;
     }
 
+    /**
+     * 组装圣遗物套装基础信息
+     *
+     * <p>包含套装效果、部件列表与故事；套装不存在时返回 null
+     *
+     * @param id 套装 ID
+     * @return 套装详情，不存在时为 null
+     */
     @Override
     public ReliquaryBaseInfoDTO getReliquaryBaseInfo(Integer id) {
         ReliquarySet set = reliquarySetRepository.findById(id).orElse(null);
@@ -153,6 +183,11 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         return dto;
     }
 
+    /**
+     * 查询 1~5 星圣遗物的主属性与副词条范围
+     *
+     * @return 按星级组织的主属性与副词条数据
+     */
     @Override
     public ReliquaryPropRankDTO getReliquaryPropRank() {
         Map<Integer, ReliquaryLevel> levels = reliquaryLevelRepository.findAllById(List.of(1, 2, 3, 4, 5)).stream()
@@ -228,6 +263,9 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         return appendProps;
     }
 
+    /**
+     * 把投影视图转换为圣遗物实体，只填充列表展示所需字段
+     */
     private Reliquary toReliquary(ReliquaryRepository.ReliquaryBriefView view) {
         Reliquary reliquary = new Reliquary();
         reliquary.setId(view.getId());
@@ -237,6 +275,9 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         return reliquary;
     }
 
+    /**
+     * 取套装效果的各档配置，按档位升序；空值返回空列表
+     */
     private List<EquipAffix.AffixLevel> sortedAffixLevels(EquipAffix affix) {
         List<EquipAffix.AffixLevel> levels = new ArrayList<>();
         if (affix != null && affix.getLevels() != null) {
@@ -247,11 +288,17 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         return levels;
     }
 
+    /**
+     * 取套装效果的第一档配置，可能返回 null
+     */
     private EquipAffix.AffixLevel firstAffixLevel(EquipAffix affix) {
         List<EquipAffix.AffixLevel> levels = sortedAffixLevels(affix);
         return levels.isEmpty() ? null : levels.get(0);
     }
 
+    /**
+     * 按部件选择套装故事章节：单故事直接返回，多故事按部件 ID 第 4 位数字定位
+     */
     private List<String> pickStory(List<List<String>> stories, Integer reliquaryId) {
         if (stories.isEmpty()) {
             return new ArrayList<>();

@@ -1,11 +1,18 @@
+# 应用主体配置
 spring:
   application:
+    # 应用名，用于日志与监控标识
     name: irminsul
+  # 数据源：MongoDB，库内为 Genshin 种子数据
   mongodb:
+    # 连接串；本地默认连接本机 GI 库，部署时用环境变量 MONGODB_URI 覆盖
     uri: ${MONGODB_URI:mongodb://localhost:27017/GI}
+  # JSON 序列化配置：缩进输出，便于调试与人工比对
   jackson:
     serialization:
       indent-output: true
 
+# 内嵌 Web 服务器
 server:
+  # 服务端口
   port: 8080

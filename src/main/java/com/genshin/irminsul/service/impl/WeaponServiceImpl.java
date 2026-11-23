@@ -17,29 +17,55 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * 武器业务实现
+ *
+ * <p>武器基础攻击与副属性由 1~100 级成长曲线加突破加成得到；主属性固定取
+ * FIGHT_PROP_BASE_ATTACK，副属性取第一个非基础攻击词条
+ */
 @Service
 @RequiredArgsConstructor
 public class WeaponServiceImpl implements WeaponService {
 
+    // 武器等级上限
     private static final int MAX_LEVEL = 100;
+    // 突破等级上限，0 表示未突破
     private static final int MAX_PROMOTE_LEVEL = 6;
 
+    // 武器基础信息仓储
     private final WeaponRepository weaponRepository;
+    // 武器图鉴仓储，提供排序号
     private final WeaponCodexRepository weaponCodexRepository;
+    // 武器突破配置仓储
     private final WeaponPromoteRepository weaponPromoteRepository;
+    // 武器成长曲线仓储
     private final WeaponCurveRepository weaponCurveRepository;
+    // 武器精炼效果仓储
     private final EquipAffixRepository equipAffixRepository;
+    // 武器故事仓储
     private final WeaponStoryRepository weaponStoryRepository;
+    // 材料仓储，用于突破消耗
     private final MaterialRepository materialRepository;
+    // 文本哈希解析工具
     private final TextMapChsUtil textMapChsUtil;
 
-    // 剧情特殊武器与废案武器
+    // 忽略的武器
     private static final Set<Integer> EXCLUDED_WEAPON_IDS =
             Set.of(11419, 11420, 11421, 11429, 12304, 13304, 14306, 15306);
 
     // 曲线表与等级无关，进程内缓存，改库后重启生效
     private volatile Map<Integer, WeaponCurve> weaponCurveCache;
 
+    /**
+     * 查询武器列表
+     *
+     * <p>以武器图鉴为源，过滤剧情特殊与测试武器，按图鉴排序号倒序
+     *
+     * @param name        名称关键词，可选
+     * @param weaponTypes 武器类型，可选
+     * @param ranks       星级筛选，可选
+     * @return 武器简要列表
+     */
     @Override
     public List<WeaponList.WeaponBrief> getWeaponList(String name, List<String> weaponTypes, List<Integer> ranks) {
         List<WeaponRepository.WeaponBriefView> weapons = weaponRepository.findAllBrief();
@@ -58,6 +84,7 @@ public class WeaponServiceImpl implements WeaponService {
         List<WeaponList.WeaponBrief> result = new ArrayList<>();
         for (WeaponRepository.WeaponBriefView weapon : weapons) {
             String weaponName = texts.get(weapon.getNameTextMapHash());
+
             // 测试武器与未上线占位武器不进入列表
             if (weaponName == null || weaponName.startsWith("(test)")) {
                 continue;
@@ -92,6 +119,14 @@ public class WeaponServiceImpl implements WeaponService {
         return result;
     }
 
+    /**
+     * 组装武器基础信息
+     *
+     * <p>基础攻击与副属性由初始值乘成长曲线再加突破加成得到；武器不存在时返回 null
+     *
+     * @param id 武器 ID
+     * @return 武器详情，不存在时为 null
+     */
     @Override
     public WeaponBaseInfoDTO getWeaponBaseInfo(Integer id) {
         Weapon weapon = weaponRepository.findById(id).orElse(null);
@@ -273,6 +308,9 @@ public class WeaponServiceImpl implements WeaponService {
         return dto;
     }
 
+    /**
+     * 懒加载全部武器成长曲线，使用双重检查锁保证只查库一次
+     */
     private Map<Integer, WeaponCurve> weaponCurves() {
         Map<Integer, WeaponCurve> curves = weaponCurveCache;
         if (curves == null) {
@@ -290,6 +328,9 @@ public class WeaponServiceImpl implements WeaponService {
         return curves;
     }
 
+    /**
+     * 读取某属性在成长曲线中的系数，缺失时返回 0
+     */
     private static double curveValue(WeaponCurve curve, String type) {
         if (curve == null || curve.getCurves() == null || type == null) {
             return 0.0;
@@ -298,6 +339,9 @@ public class WeaponServiceImpl implements WeaponService {
         return value == null ? 0.0 : value;
     }
 
+    /**
+     * 按等级阈值换算突破等级：20/40/50/60/70/80 级依次为 1~6
+     */
     private static int toPromoteLevel(int level) {
         if (level >= 80) return 6;
         if (level >= 70) return 5;
@@ -308,6 +352,9 @@ public class WeaponServiceImpl implements WeaponService {
         return 0;
     }
 
+    /**
+     * 把武器图标名转换为抽卡卡片图标名
+     */
     private static String toGachaCard(String icon) {
         if (icon == null) {
             return null;
@@ -316,6 +363,9 @@ public class WeaponServiceImpl implements WeaponService {
         return "UI_Gacha_EquipIcon_" + suffix;
     }
 
+    /**
+     * 把属性枚举转换为中文属性名，未收录的返回"未知"
+     */
     private static String translateStat(String stat) {
         if (stat == null) {
             return "未知";

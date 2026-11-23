@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+/** 简体中文文本表，对应 text_map_chs 集合 */
 @Repository
 public interface TextMapChsRepository extends MongoRepository<TextMapChs, String> {
     // 按哈希集合批量取文本

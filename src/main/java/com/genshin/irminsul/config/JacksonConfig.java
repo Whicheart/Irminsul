@@ -9,6 +9,11 @@ import tools.jackson.databind.module.SimpleModule;
 @Configuration
 public class JacksonConfig {
 
+    /**
+     * 注册全局 Double 序列化器，避免大数在 JSON 中被写成科学计数法
+     *
+     * @return Jackson 构建器定制器
+     */
     @Bean
     public JsonMapperBuilderCustomizer plainDoubleCustomizer() {
         return builder -> builder.addModule(new SimpleModule("plain-double")
