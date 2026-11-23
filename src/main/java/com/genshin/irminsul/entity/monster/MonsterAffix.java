@@ -25,15 +25,9 @@ public class MonsterAffix {
     @Field("iconPath")
     private String iconPath;
 
-    @Field("entityBudgetLevel")
-    private Integer entityBudgetLevel;
-
     @Field("isCommon")
     private Boolean isCommon;
 
     @Field("isLegal")
     private String isLegal;
-
-    @Field("preAdd")
-    private Boolean preAdd;
 }

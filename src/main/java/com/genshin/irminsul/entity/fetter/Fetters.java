@@ -43,12 +43,6 @@ public class Fetters {
     @Field("openConds")
     private List<OpenCond> openConds;
 
-    @Field("hideCostumeList")
-    private List<Integer> hideCostumeList;
-
-    @Field("showCostumeList")
-    private List<Integer> showCostumeList;
-
     @Data
     public static class OpenCond {
 

@@ -36,7 +36,4 @@ public class ReliquarySet {
 
     @Field("dungeonGroup")
     private List<Integer> dungeonGroup;
-
-    @Field("disableFilter")
-    private Integer disableFilter;
 }

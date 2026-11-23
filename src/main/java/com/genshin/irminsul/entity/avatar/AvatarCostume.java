@@ -33,9 +33,6 @@ public class AvatarCostume {
     @Field("sideIconName")
     private String sideIconName;
 
-    @Field("jsonName")
-    private String jsonName;
-
     @Field("frontIconName")
     private String frontIconName;
 
@@ -47,7 +44,4 @@ public class AvatarCostume {
 
     @Field("isDefault")
     private Boolean isDefault;
-
-    @Field("domesticHideInArtPreview")
-    private Boolean domesticHideInArtPreview;
 }

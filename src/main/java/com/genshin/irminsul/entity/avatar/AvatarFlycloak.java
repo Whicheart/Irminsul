@@ -21,12 +21,6 @@ public class AvatarFlycloak {
     @Field("icon")
     private String icon;
 
-    @Field("jsonName")
-    private String jsonName;
-
-    @Field("prefabPath")
-    private String prefabPath;
-
     @Field("hide")
     private Boolean hide;
 }

@@ -37,9 +37,6 @@ public class AvatarTalent {
     @Field("mainCostItemCount")
     private Integer mainCostItemCount;
 
-    @Field("prevTalent")
-    private Integer prevTalent;
-
     @Field("openConfig")
     private String openConfig;
 

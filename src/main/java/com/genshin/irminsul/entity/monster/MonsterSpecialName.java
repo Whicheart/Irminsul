@@ -17,7 +17,4 @@ public class MonsterSpecialName {
 
     @Field("specialNameTextMapHash")
     private String specialNameTextMapHash;
-
-    @Field("isInRandomList")
-    private Boolean isInRandomList;
 }

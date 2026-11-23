@@ -52,9 +52,6 @@ public class Avatar {
     @Field("initialWeapon")
     private Integer initialWeapon;
 
-    @Field("manekinMotionConfig")
-    private Integer manekinMotionConfig;
-
     @Field("featureTagGroupID")
     private Integer featureTagGroupID;
 

@@ -67,20 +67,11 @@ public class AvatarSkill {
     @Field("lockWeightParams")
     private List<Double> lockWeightParams;
 
-    @Field("isAttackCameraLock")
-    private Boolean isAttackCameraLock;
-
     @Field("triggerID")
     private Integer triggerID;
 
-    @Field("dragType")
-    private String dragType;
-
     @Field("forceCanDoSkill")
     private Boolean forceCanDoSkill;
-
-    @Field("showIconArrow")
-    private Boolean showIconArrow;
 
     @Field("ignoreCDMinusRatio")
     private Boolean ignoreCDMinusRatio;
@@ -97,14 +88,8 @@ public class AvatarSkill {
     @Field("needStore")
     private Boolean needStore;
 
-    @Field("isBobk")
-    private Boolean isBobk;
-
     @Field("cdSlot")
     private Integer cdSlot;
-
-    @Field("isLece")
-    private Boolean isLece;
 
     @Field("globalValueKey")
     private String globalValueKey;

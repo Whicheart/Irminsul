@@ -70,9 +70,6 @@ public class ProudSkill {
     @Field("lifeEffectParams")
     private List<String> lifeEffectParams;
 
-    @Field("isHideLifeProudSkill")
-    private Boolean isHideLifeProudSkill;
-
     @Field("filterConds")
     private List<String> filterConds;
 

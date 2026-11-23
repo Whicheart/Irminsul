@@ -34,18 +34,6 @@ public class AnimalCodex {
     @Field("extraDescTextMapHash")
     private List<String> extraDescTextMapHash;
 
-    @Field("modelPath")
-    private String modelPath;
-
     @Field("sortOrder")
     private Integer sortOrder;
-
-    @Field("isDisuse")
-    private Boolean isDisuse;
-
-    @Field("isSeenActive")
-    private Boolean isSeenActive;
-
-    @Field("showOnlyUnlocked")
-    private Boolean showOnlyUnlocked;
 }

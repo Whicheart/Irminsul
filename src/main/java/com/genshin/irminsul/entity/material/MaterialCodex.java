@@ -44,10 +44,4 @@ public class MaterialCodex {
 
     @Field("questID1")
     private Integer questID1;
-
-    @Field("isDisuse")
-    private Boolean isDisuse;
-
-    @Field("showOnlyUnlocked")
-    private Boolean showOnlyUnlocked;
 }

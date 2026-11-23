@@ -88,50 +88,14 @@ public class Monster {
     @Field("mpPropID")
     private Integer mpPropID;
 
-    @Field("visionLevel")
-    private String visionLevel;
-
-    @Field("securityLevel")
-    private String securityLevel;
-
-    @Field("excludeWeathers")
-    private String excludeWeathers;
-
-    @Field("radarHintID")
-    private Integer radarHintID;
-
     @Field("featureTagGroupID")
     private Integer featureTagGroupID;
-
-    @Field("entityBudgetLevel")
-    private Integer entityBudgetLevel;
-
-    @Field("combatBGMLevel")
-    private Integer combatBGMLevel;
 
     @Field("ai")
     private String ai;
 
-    @Field("lodPatternName")
-    private String lodPatternName;
-
-    @Field("serverScript")
-    private String serverScript;
-
     @Field("skin")
     private String skin;
-
-    @Field("isAIHashCheck")
-    private Boolean isAIHashCheck;
-
-    @Field("isInvisibleReset")
-    private Boolean isInvisibleReset;
-
-    @Field("safetyCheck")
-    private Boolean safetyCheck;
-
-    @Field("hideNameInElementView")
-    private Boolean hideNameInElementView;
 
     @Data
     public static class HpDrop {

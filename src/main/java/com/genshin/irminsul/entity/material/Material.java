@@ -73,12 +73,6 @@ public class Material {
     @Field("satiationParams")
     private List<Integer> satiationParams;
 
-    @Field("useOnGain")
-    private Boolean useOnGain;
-
-    @Field("closeBagAfterUsed")
-    private Boolean closeBagAfterUsed;
-
     @Field("stackLimit")
     private Integer stackLimit;
 
@@ -111,21 +105,6 @@ public class Material {
 
     @Field("setID")
     private Integer setID;
-
-    @Field("noFirstGetHint")
-    private Boolean noFirstGetHint;
-
-    @Field("isForceGetHint")
-    private Boolean isForceGetHint;
-
-    @Field("isSplitDrop")
-    private Boolean isSplitDrop;
-
-    @Field("isHidden")
-    private Boolean isHidden;
-
-    @Field("playGainEffect")
-    private Boolean playGainEffect;
 
     @Data
     public static class ItemUse {

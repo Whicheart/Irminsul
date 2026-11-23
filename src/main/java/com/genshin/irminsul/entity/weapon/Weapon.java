@@ -58,12 +58,6 @@ public class Weapon {
     @Field("awakenIcon")
     private String awakenIcon;
 
-    @Field("awakenTexture")
-    private String awakenTexture;
-
-    @Field("awakenLightMapTexture")
-    private String awakenLightMapTexture;
-
     @Field("awakenMaterial")
     private Integer awakenMaterial;
 
@@ -81,12 +75,6 @@ public class Weapon {
 
     @Field("gadgetId")
     private Integer gadgetId;
-
-    @Field("initialLockState")
-    private Integer initialLockState;
-
-    @Field("unRotate")
-    private Boolean unRotate;
 
     @Field("weight")
     private Integer weight;

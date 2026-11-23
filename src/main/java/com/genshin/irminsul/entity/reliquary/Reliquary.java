@@ -67,9 +67,6 @@ public class Reliquary {
     @Field("gadgetId")
     private Integer gadgetId;
 
-    @Field("dropable")
-    private Boolean dropable;
-
     @Field("destroyRule")
     private String destroyRule;
 
