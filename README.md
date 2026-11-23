@@ -1,6 +1,6 @@
 # irminsul
 
-游戏百科资料 API。把 MongoDB 里的数据聚合成前端可直接渲染的 JSON。
+游戏百科资料 API。
 
 > 本项目仅用于学习与研究。
 
@@ -9,8 +9,8 @@
 - [技术栈](#技术栈)
 - [快速开始](#快速开始)
 - [配置](#配置)
-- [接口](#接口)
 - [开发](#开发)
+- [接口](#接口)
 
 ## 技术栈
 
@@ -20,7 +20,8 @@
 | 框架      | Spring Boot 4.0.1                                              |
 | 持久化    | Spring Data MongoDB                                            |
 | 接口文档  | springdoc-openapi 3.0.0（Swagger UI）                          |
-| 辅助      | Lombok；Caffeine                                               |
+| 序列化    | Jackson        |
+| 辅助      | Lombok；Caffeine                           |
 | 构建/格式 | Maven Wrapper（Maven 3.9.12）、Spotless + palantir-java-format |
 
 ## 快速开始
@@ -68,44 +69,6 @@ java -jar target/irminsul-0.0.1-SNAPSHOT.jar
 git config core.hooksPath .githooks
 ```
 
-## 接口
-
-所有接口统一返回 `{ "code": 200, "msg": "ok", "data": ... }`，`code` 非 200 表示业务或系统错误。
-
-| 方法与路径                            | 说明                                                                                                      |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `GET /api/avatar/list`                | 角色列表。可选参数：`name`（模糊包含）、`elements`、`weaponTypes`、`qualityTypes`（可重复传参或逗号分隔） |
-| `GET /api/avatar/{id}/base-info`      | 角色基础信息                                                                                              |
-| `GET /api/avatar/{id}/outfits`        | 时装列表                                                                                                  |
-| `GET /api/avatar/{id}/stories`        | 角色故事                                                                                                  |
-| `GET /api/avatar/{id}/voices`         | 角色语音                                                                                                  |
-| `GET /api/avatar/{id}/constellations` | 命之座 1–6                                                                                                |
-| `GET /api/avatar/{id}/skills`         | 角色天赋                                                                                                  |
-| `GET /api/weapon/list`                | 武器列表。可选参数：`name`、`weaponTypes`、`ranks`                                                        |
-| `GET /api/weapon/{id}/base-info`      | 武器基础信息                                                                                              |
-| `GET /api/reliquary/list`             | 圣遗物套装列表。可选参数：`name`（模糊包含）、`ranks`                                                      |
-| `GET /api/reliquary/{id}/base-info`   | 套装效果、包含部件及部件故事                                                                              |
-| `GET /api/reliquary/prop-rank`        | 1–5 星主属性与副词条的数值表                                                                              |
-
-过滤参数的枚举取值：
-
-- `elements`：`Fire`、`Water`、`Wind`、`Electric`、`Grass`、`Ice`、`Rock`
-- `weaponTypes`：`WEAPON_SWORD_ONE_HAND`、`WEAPON_CLAYMORE`、`WEAPON_POLE`、`WEAPON_BOW`、`WEAPON_CATALYST`
-- `qualityTypes`：`QUALITY_ORANGE`、`QUALITY_ORANGE_SP`、`QUALITY_PURPLE`
-- `ranks`：`1`–`5`
-
-示例：
-
-```bash
-curl 'http://localhost:8080/api/avatar/list?name=绫华'
-curl 'http://localhost:8080/api/avatar/list?elements=Water&qualityTypes=QUALITY_ORANGE'
-curl 'http://localhost:8080/api/avatar/10000002/base-info'
-curl 'http://localhost:8080/api/weapon/list?weaponTypes=WEAPON_SWORD_ONE_HAND&ranks=5'
-curl 'http://localhost:8080/api/reliquary/list'
-curl 'http://localhost:8080/api/reliquary/list?name=行者&ranks=4'
-curl 'http://localhost:8080/api/reliquary/prop-rank'
-```
-
 ## 开发
 
 ```bash
@@ -116,4 +79,46 @@ curl 'http://localhost:8080/api/reliquary/prop-rank'
 
 代码风格由 `.editorconfig` 约定：UTF-8、LF、4 空格缩进（`yml`/`xml`/`json` 为 2 空格），`.cmd` 使用 CRLF。
 
+`.gitattributes` 负责把文本文件在仓库内统一为 LF，并保留 `mvnw`（LF）与 `*.cmd`（CRLF）的差异，避免跨平台提交产生整文件换行改动。
+
 提交前会扫描暂存区的密钥特征，启用与绕过方式见 [.githooks/README.md](.githooks/README.md)。
+
+## 接口
+
+所有接口统一返回 `{ "code": 200, "msg": "ok", "data": ... }`，`code` 非 200 表示业务或系统错误。
+
+以下接口参数中，name 参数采用模糊包含，剩余参数可重复传参或逗号分隔。
+
+### 角色
+
+| 方法与路径                            | 说明                                                       |
+| ------------------------------------- |----------------------------------------------------------|
+| `GET /api/avatar/list`                | 角色列表。可选参数：`name`、`elements`、`weaponTypes`、`qualityTypes` |
+| `GET /api/avatar/{id}/base-info`      | 角色基础信息                                                   |
+| `GET /api/avatar/{id}/outfits`        | 角色时装                                                     |
+| `GET /api/avatar/{id}/stories`        | 角色故事                                                     |
+| `GET /api/avatar/{id}/voices`         | 角色语音                                                     |
+| `GET /api/avatar/{id}/constellations` | 角色命座                                                     |
+| `GET /api/avatar/{id}/skills`         | 角色天赋                                                     |
+
+### 武器
+
+| 方法与路径                       | 说明                                               |
+| -------------------------------- | -------------------------------------------------- |
+| `GET /api/weapon/list`           | 武器列表。可选参数：`name`、`weaponTypes`、`ranks` |
+| `GET /api/weapon/{id}/base-info` | 武器基础信息                                       |
+
+### 圣遗物
+
+| 方法与路径                          | 说明                       |
+| ----------------------------------- |--------------------------|
+| `GET /api/reliquary/list`           | 圣遗物套装列表。可选参数：`name`、`ranks` |
+| `GET /api/reliquary/prop-rank`      | 主副词条的数值表                 |
+| `GET /api/reliquary/{id}/base-info` | 圣遗物基础信息                  |
+
+### 敌对生物
+
+| 方法与路径                        | 说明                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| `GET /api/monster/list`           | 敌对生物列表。可选参数：`name`、`types` |
+| `GET /api/monster/{id}/base-info` | 敌对生物基础信息                                        |
