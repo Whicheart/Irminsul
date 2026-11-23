@@ -42,3 +42,6 @@ application-secret.*
 *.jks
 *.p12
 *.keystore
+
+# 本地临时脚本与工具产物
+/tools/
