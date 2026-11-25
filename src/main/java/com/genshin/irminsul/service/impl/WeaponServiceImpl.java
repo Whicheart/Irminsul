@@ -11,6 +11,8 @@ import com.genshin.irminsul.repository.*;
 import com.genshin.irminsul.repository.material.MaterialRepository;
 import com.genshin.irminsul.repository.weapon.*;
 import com.genshin.irminsul.service.WeaponService;
+import com.genshin.irminsul.util.FightPropUtil;
+import com.genshin.irminsul.util.PromoteLevelUtil;
 import com.genshin.irminsul.util.TextMapChsUtil;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -249,7 +251,7 @@ public class WeaponServiceImpl implements WeaponService {
         List<Double> subStatValue = new ArrayList<>(MAX_LEVEL);
         for (int level = 1; level <= MAX_LEVEL; level++) {
             WeaponCurve curve = curves.get(level);
-            int promoteLevel = toPromoteLevel(level);
+            int promoteLevel = PromoteLevelUtil.toPromoteLevel(level);
             atk.add(baseInit * curveValue(curve, baseCurve) + atkBonus[promoteLevel]);
             if (subProp != null) {
                 subStatValue.add(subInit * curveValue(curve, subCurve));
@@ -257,7 +259,7 @@ public class WeaponServiceImpl implements WeaponService {
         }
 
         dto.setAtk(atk);
-        dto.setSubStatName(subProp == null ? null : translateStat(subProp.getPropType()));
+        dto.setSubStatName(subProp == null ? null : FightPropUtil.translateStat(subProp.getPropType()));
         dto.setSubStatValue(subStatValue);
 
         List<WeaponBaseInfoResponse.Material> materialList = new ArrayList<>();
@@ -341,19 +343,6 @@ public class WeaponServiceImpl implements WeaponService {
     }
 
     /**
-     * 按等级阈值换算突破等级：20/40/50/60/70/80 级依次为 1~6
-     */
-    private static int toPromoteLevel(int level) {
-        if (level >= 80) return 6;
-        if (level >= 70) return 5;
-        if (level >= 60) return 4;
-        if (level >= 50) return 3;
-        if (level >= 40) return 2;
-        if (level >= 20) return 1;
-        return 0;
-    }
-
-    /**
      * 把武器图标名转换为抽卡卡片图标名
      */
     private static String toGachaCard(String icon) {
@@ -364,31 +353,4 @@ public class WeaponServiceImpl implements WeaponService {
         return "UI_Gacha_EquipIcon_" + suffix;
     }
 
-    /**
-     * 把属性枚举转换为中文属性名，未收录的返回"未知"
-     */
-    private static String translateStat(String stat) {
-        if (stat == null) {
-            return "未知";
-        }
-        return switch (stat) {
-            case "FIGHT_PROP_HP_PERCENT" -> "生命值";
-            case "FIGHT_PROP_ATTACK_PERCENT" -> "攻击力";
-            case "FIGHT_PROP_DEFENSE_PERCENT" -> "防御力";
-            case "FIGHT_PROP_ELEMENT_MASTERY" -> "元素精通";
-            case "FIGHT_PROP_CHARGE_EFFICIENCY" -> "元素充能效率";
-            case "FIGHT_PROP_CRITICAL" -> "暴击率";
-            case "FIGHT_PROP_CRITICAL_HURT" -> "暴击伤害";
-            case "FIGHT_PROP_HEAL_ADD" -> "治疗加成";
-            case "FIGHT_PROP_FIRE_ADD_HURT" -> "火元素伤害加成";
-            case "FIGHT_PROP_WATER_ADD_HURT" -> "水元素伤害加成";
-            case "FIGHT_PROP_ICE_ADD_HURT" -> "冰元素伤害加成";
-            case "FIGHT_PROP_ELEC_ADD_HURT" -> "雷元素伤害加成";
-            case "FIGHT_PROP_WIND_ADD_HURT" -> "风元素伤害加成";
-            case "FIGHT_PROP_ROCK_ADD_HURT" -> "岩元素伤害加成";
-            case "FIGHT_PROP_GRASS_ADD_HURT" -> "草元素伤害加成";
-            case "FIGHT_PROP_PHYSICAL_ADD_HURT" -> "物理伤害加成";
-            default -> stat;
-        };
-    }
 }

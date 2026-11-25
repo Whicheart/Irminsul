@@ -13,6 +13,8 @@ import com.genshin.irminsul.repository.fetter.FetterStoryRepository;
 import com.genshin.irminsul.repository.fetter.FettersRepository;
 import com.genshin.irminsul.repository.material.MaterialRepository;
 import com.genshin.irminsul.service.AvatarService;
+import com.genshin.irminsul.util.FightPropUtil;
+import com.genshin.irminsul.util.PromoteLevelUtil;
 import com.genshin.irminsul.util.TextMapChsUtil;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -337,7 +339,7 @@ public class AvatarServiceImpl implements AvatarService {
         List<Double> ascension = new ArrayList<>(MAX_LEVEL);
         for (int level = 1; level <= MAX_LEVEL; level++) {
             AvatarCurve curve = curves.get(level);
-            int promoteLevel = toPromoteLevel(level);
+            int promoteLevel = PromoteLevelUtil.toPromoteLevel(level);
             hp.add(hpBase * curveValue(curve, hpCurve) + hpBonus[promoteLevel]);
             atk.add(atkBase * curveValue(curve, atkCurve) + atkBonus[promoteLevel]);
             def.add(defBase * curveValue(curve, defCurve) + defBonus[promoteLevel]);
@@ -348,7 +350,7 @@ public class AvatarServiceImpl implements AvatarService {
         dto.setAtk(atk);
         dto.setDef(def);
         dto.setElementMastery(avatar.getElementMastery());
-        dto.setAscensionStatName(translateStat(ascType));
+        dto.setAscensionStatName(FightPropUtil.translateStat(ascType));
         dto.setAscensionStatValue(ascension);
     }
 
@@ -974,19 +976,6 @@ public class AvatarServiceImpl implements AvatarService {
     }
 
     /**
-     * 按等级阈值换算突破等级：20/40/50/60/70/80 级依次为 1~6
-     */
-    private static int toPromoteLevel(int level) {
-        if (level >= 80) return 6;
-        if (level >= 70) return 5;
-        if (level >= 60) return 4;
-        if (level >= 50) return 3;
-        if (level >= 40) return 2;
-        if (level >= 20) return 1;
-        return 0;
-    }
-
-    /**
      * 把角色图标名转换为抽卡立绘图标名
      */
     private static String toGachaAvatarIcon(String icon) {
@@ -1124,31 +1113,4 @@ public class AvatarServiceImpl implements AvatarService {
         };
     }
 
-    /**
-     * 把属性枚举转换为中文属性名，未收录的返回"未知"
-     */
-    private static String translateStat(String stat) {
-        if (stat == null) {
-            return "未知";
-        }
-        return switch (stat) {
-            case "FIGHT_PROP_HP_PERCENT" -> "生命值";
-            case "FIGHT_PROP_ATTACK_PERCENT" -> "攻击力";
-            case "FIGHT_PROP_DEFENSE_PERCENT" -> "防御力";
-            case "FIGHT_PROP_ELEMENT_MASTERY" -> "元素精通";
-            case "FIGHT_PROP_CHARGE_EFFICIENCY" -> "元素充能效率";
-            case "FIGHT_PROP_CRITICAL" -> "暴击率";
-            case "FIGHT_PROP_CRITICAL_HURT" -> "暴击伤害";
-            case "FIGHT_PROP_HEAL_ADD" -> "治疗加成";
-            case "FIGHT_PROP_FIRE_ADD_HURT" -> "火元素伤害加成";
-            case "FIGHT_PROP_WATER_ADD_HURT" -> "水元素伤害加成";
-            case "FIGHT_PROP_ICE_ADD_HURT" -> "冰元素伤害加成";
-            case "FIGHT_PROP_ELEC_ADD_HURT" -> "雷元素伤害加成";
-            case "FIGHT_PROP_WIND_ADD_HURT" -> "风元素伤害加成";
-            case "FIGHT_PROP_ROCK_ADD_HURT" -> "岩元素伤害加成";
-            case "FIGHT_PROP_GRASS_ADD_HURT" -> "草元素伤害加成";
-            case "FIGHT_PROP_PHYSICAL_ADD_HURT" -> "物理伤害加成";
-            default -> stat;
-        };
-    }
 }
