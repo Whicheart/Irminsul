@@ -30,7 +30,7 @@ public class AvatarController {
      * @return 简要角色列表，不含详情
      */
     @GetMapping("/list")
-    public Result<List<AvatarList.AvatarBrief>> getList(
+    public Result<List<AvatarListResponse.AvatarBrief>> getList(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) List<String> elements,
             @RequestParam(required = false) List<String> weaponTypes,
@@ -45,8 +45,8 @@ public class AvatarController {
      * @return 角色详情；不存在时返回 404 错误响应
      */
     @GetMapping("/{id}/base-info")
-    public Result<AvatarBaseInfoDTO> getBaseInfo(@PathVariable Integer id) {
-        AvatarBaseInfoDTO detail = avatarService.getAvatarBaseInfo(id);
+    public Result<AvatarBaseInfoResponse> getBaseInfo(@PathVariable Integer id) {
+        AvatarBaseInfoResponse detail = avatarService.getAvatarBaseInfo(id);
         if (detail == null) {
             return Result.error(404, "角色不存在");
         }
@@ -60,7 +60,7 @@ public class AvatarController {
      * @return 装扮数据
      */
     @GetMapping("/{id}/outfits")
-    public Result<AvatarOutfitDTO> getAvatarOutfits(@PathVariable Integer id) {
+    public Result<AvatarOutfitResponse> getAvatarOutfits(@PathVariable Integer id) {
         return Result.ok(avatarService.getAvatarOutfits(id));
     }
 
@@ -71,7 +71,7 @@ public class AvatarController {
      * @return 故事数据
      */
     @GetMapping("/{id}/stories")
-    public Result<AvatarStoryDTO> getAvatarStories(@PathVariable Integer id) {
+    public Result<AvatarStoryResponse> getAvatarStories(@PathVariable Integer id) {
         return Result.ok(avatarService.getAvatarStories(id));
     }
 
@@ -82,7 +82,7 @@ public class AvatarController {
      * @return 语音数据
      */
     @GetMapping("/{id}/voices")
-    public Result<AvatarVoiceDTO> getAvatarVoices(@PathVariable Integer id) {
+    public Result<AvatarVoiceResponse> getAvatarVoices(@PathVariable Integer id) {
         return Result.ok(avatarService.getAvatarVoices(id));
     }
 
@@ -93,7 +93,7 @@ public class AvatarController {
      * @return 命座数据；角色不存在时为 null
      */
     @GetMapping("/{id}/constellations")
-    public Result<AvatarConstellationDTO> getAvatarConstellations(@PathVariable Integer id) {
+    public Result<AvatarConstellationResponse> getAvatarConstellations(@PathVariable Integer id) {
         return Result.ok(avatarService.getAvatarConstellations(id));
     }
 
@@ -104,7 +104,7 @@ public class AvatarController {
      * @return 技能数据；角色不存在时为 null
      */
     @GetMapping("/{id}/skills")
-    public Result<AvatarSkillDTO> getAvatarSkills(@PathVariable Integer id) {
+    public Result<AvatarSkillResponse> getAvatarSkills(@PathVariable Integer id) {
         return Result.ok(avatarService.getAvatarSkills(id));
     }
 }

@@ -91,7 +91,7 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 简要角色列表
      */
     @Override
-    public List<AvatarList.AvatarBrief> getAvatarList(
+    public List<AvatarListResponse.AvatarBrief> getAvatarList(
             String name, List<String> elements, List<String> weaponTypes, List<String> qualityTypes) {
         List<AvatarRepository.AvatarBriefView> candidates = avatarRepository.findAllBrief().stream()
                 .filter(avatar -> avatar.getId() != null && avatar.getId() >= 10000002 && avatar.getId() <= 10000899)
@@ -122,7 +122,7 @@ public class AvatarServiceImpl implements AvatarService {
         Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
         String nameFilter = name == null || name.trim().isEmpty() ? null : name.trim();
-        List<AvatarList.AvatarBrief> result = new ArrayList<>();
+        List<AvatarListResponse.AvatarBrief> result = new ArrayList<>();
         for (AvatarRepository.AvatarBriefView avatar : candidates) {
             String avatarName = texts.get(avatar.getNameTextMapHash());
             if (avatarName == null || EXCLUDED_AVATAR_NAMES.contains(avatarName)) {
@@ -145,7 +145,7 @@ public class AvatarServiceImpl implements AvatarService {
             }
 
             AvatarCodexRepository.AvatarCodexBriefView codex = codexById.get(avatar.getId());
-            AvatarList.AvatarBrief brief = new AvatarList.AvatarBrief();
+            AvatarListResponse.AvatarBrief brief = new AvatarListResponse.AvatarBrief();
             brief.setId(avatar.getId());
             brief.setSortId(codex == null ? null : codex.getSortId());
             brief.setName(avatarName);
@@ -158,7 +158,7 @@ public class AvatarServiceImpl implements AvatarService {
         }
 
         result.sort(Comparator.comparing(
-                (AvatarList.AvatarBrief brief) -> brief.getSortId() == null ? -1 : brief.getSortId(),
+                (AvatarListResponse.AvatarBrief brief) -> brief.getSortId() == null ? -1 : brief.getSortId(),
                 Comparator.reverseOrder()));
         return result;
     }
@@ -172,7 +172,7 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 角色详情，不存在时为 null
      */
     @Override
-    public AvatarBaseInfoDTO getAvatarBaseInfo(Integer id) {
+    public AvatarBaseInfoResponse getAvatarBaseInfo(Integer id) {
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) {
             return null;
@@ -205,7 +205,7 @@ public class AvatarServiceImpl implements AvatarService {
                 fetter.getCvJapaneseTextMapHash(),
                 fetter.getCvKoreanTextMapHash()));
 
-        AvatarBaseInfoDTO dto = new AvatarBaseInfoDTO();
+        AvatarBaseInfoResponse dto = new AvatarBaseInfoResponse();
         dto.setId(avatar.getId());
         dto.setTitle(texts.get(fetter.getAvatarTitleTextMapHash()));
         dto.setName(texts.get(avatar.getNameTextMapHash()));
@@ -229,31 +229,31 @@ public class AvatarServiceImpl implements AvatarService {
         }
         dto.setAffiliation(affiliation);
 
-        AvatarBaseInfoDTO.Birth birth = new AvatarBaseInfoDTO.Birth();
+        AvatarBaseInfoResponse.Birth birth = new AvatarBaseInfoResponse.Birth();
         birth.setMonth(fetter.getInfoBirthMonth());
         birth.setDay(fetter.getInfoBirthDay());
         dto.setBirth(birth);
 
-        AvatarBaseInfoDTO.Constellation constellation = new AvatarBaseInfoDTO.Constellation();
+        AvatarBaseInfoResponse.Constellation constellation = new AvatarBaseInfoResponse.Constellation();
         constellation.setBefor(texts.get(fetter.getAvatarConstellationBeforTextMapHash()));
         constellation.setAfter(texts.get(fetter.getAvatarConstellationAfterTextMapHash()));
         dto.setConstellation(constellation);
 
         String defaultPower = HEART_OF_GOD_AVATAR_IDS.contains(avatar.getId()) ? "神之心" : "神之眼";
-        AvatarBaseInfoDTO.Vision vision = new AvatarBaseInfoDTO.Vision();
+        AvatarBaseInfoResponse.Vision vision = new AvatarBaseInfoResponse.Vision();
         vision.setBefor(orDefault(texts.get(fetter.getAvatarPowerBeforTextMapHash()), defaultPower));
         vision.setAfter(texts.get(fetter.getAvatarPowerAfterTextMapHash()));
         vision.setIconName(toVisionIconName(fetter.getAvatarAssocType(), depot == null ? null : depot.getArkheType()));
         dto.setVision(vision);
 
         String elementText = texts.get(fetter.getAvatarVisionBeforTextMapHash());
-        AvatarBaseInfoDTO.Element element = new AvatarBaseInfoDTO.Element();
+        AvatarBaseInfoResponse.Element element = new AvatarBaseInfoResponse.Element();
         element.setBefor(elementText);
         element.setAfter(texts.get(fetter.getAvatarVisionAfterTextMapHash()));
         element.setIconName(toElementIconName(fetter.getAvatarAssocType(), translateElement(elementText)));
         dto.setElement(element);
 
-        AvatarBaseInfoDTO.Cv cv = new AvatarBaseInfoDTO.Cv();
+        AvatarBaseInfoResponse.Cv cv = new AvatarBaseInfoResponse.Cv();
         cv.setCn(texts.get(fetter.getCvChineseTextMapHash()));
         cv.setEn(texts.get(fetter.getCvEnglishTextMapHash()));
         cv.setJp(texts.get(fetter.getCvJapaneseTextMapHash()));
@@ -270,7 +270,7 @@ public class AvatarServiceImpl implements AvatarService {
     /**
      * 按 1~100 级逐级累加成长曲线与突破加成，填充生命、攻击、防御与突破属性
      */
-    private void buildAttributes(Avatar avatar, AvatarPromote promote, AvatarBaseInfoDTO dto) {
+    private void buildAttributes(Avatar avatar, AvatarPromote promote, AvatarBaseInfoResponse dto) {
         Map<Integer, AvatarCurve> curves = avatarCurves();
         List<Avatar.PropGrowCurve> growCurves = avatar.getPropGrowCurves();
 
@@ -355,8 +355,8 @@ public class AvatarServiceImpl implements AvatarService {
     /**
      * 汇总角色突破材料与天赋升级材料，材料名称经 TextMap 翻译
      */
-    private AvatarBaseInfoDTO.Material buildMaterials(AvatarPromote promote, AvatarSkillDepot depot) {
-        List<AvatarBaseInfoDTO.LevelUpMaterial> levelUpMaterials = new ArrayList<>();
+    private AvatarBaseInfoResponse.Material buildMaterials(AvatarPromote promote, AvatarSkillDepot depot) {
+        List<AvatarBaseInfoResponse.LevelUpMaterial> levelUpMaterials = new ArrayList<>();
         Set<Integer> materialIds = new LinkedHashSet<>();
         List<AvatarPromote.PromoteLevel> promoteLevels = promote.getLevels();
         if (promoteLevels != null) {
@@ -409,7 +409,7 @@ public class AvatarServiceImpl implements AvatarService {
                 if (level == null || level < 1) {
                     continue;
                 }
-                AvatarBaseInfoDTO.LevelUpMaterial levelUpMaterial = new AvatarBaseInfoDTO.LevelUpMaterial();
+                AvatarBaseInfoResponse.LevelUpMaterial levelUpMaterial = new AvatarBaseInfoResponse.LevelUpMaterial();
                 levelUpMaterial.setPromoteLevel(level);
                 levelUpMaterial.setUnlockMaxLevel(promoteLevel.getUnlockMaxLevel());
                 levelUpMaterial.setMoraCost(promoteLevel.getScoinCost());
@@ -419,16 +419,16 @@ public class AvatarServiceImpl implements AvatarService {
             }
         }
 
-        List<AvatarBaseInfoDTO.TalentUpMaterial> talentUpMaterials = new ArrayList<>();
+        List<AvatarBaseInfoResponse.TalentUpMaterial> talentUpMaterials = new ArrayList<>();
         for (ProudSkill proudSkill : proudSkills) {
-            AvatarBaseInfoDTO.TalentUpMaterial talentUpMaterial = new AvatarBaseInfoDTO.TalentUpMaterial();
+            AvatarBaseInfoResponse.TalentUpMaterial talentUpMaterial = new AvatarBaseInfoResponse.TalentUpMaterial();
             talentUpMaterial.setLevel(proudSkill.getLevel());
             talentUpMaterial.setMoraCost(proudSkill.getCoinCost());
             talentUpMaterial.setCostItems(buildProudCostItems(proudSkill.getCostItems(), materials, materialNames));
             talentUpMaterials.add(talentUpMaterial);
         }
 
-        AvatarBaseInfoDTO.Material material = new AvatarBaseInfoDTO.Material();
+        AvatarBaseInfoResponse.Material material = new AvatarBaseInfoResponse.Material();
         material.setLevelUpMaterial(levelUpMaterials);
         material.setTalentUpMaterial(talentUpMaterials);
         return material;
@@ -440,11 +440,11 @@ public class AvatarServiceImpl implements AvatarService {
      * @param costItems 材料条目
      * @return 前端可直接展示的材料列表
      */
-    private List<AvatarBaseInfoDTO.CostItem> buildAvatarCostItems(
+    private List<AvatarBaseInfoResponse.CostItem> buildAvatarCostItems(
             List<AvatarPromote.CostItem> costItems,
             Map<Integer, MaterialRepository.MaterialBriefView> materials,
             Map<Integer, String> materialNames) {
-        List<AvatarBaseInfoDTO.CostItem> result = new ArrayList<>();
+        List<AvatarBaseInfoResponse.CostItem> result = new ArrayList<>();
         if (costItems == null) {
             return result;
         }
@@ -452,7 +452,7 @@ public class AvatarServiceImpl implements AvatarService {
             if (item == null || item.getId() == null) {
                 continue;
             }
-            AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
+            AvatarBaseInfoResponse.CostItem costItem = new AvatarBaseInfoResponse.CostItem();
             costItem.setId(item.getId());
             costItem.setName(materialNames.get(item.getId()));
             costItem.setCount(item.getCount());
@@ -469,11 +469,11 @@ public class AvatarServiceImpl implements AvatarService {
      * @param costItems 材料条目
      * @return 前端可直接展示的材料列表
      */
-    private List<AvatarBaseInfoDTO.CostItem> buildProudCostItems(
+    private List<AvatarBaseInfoResponse.CostItem> buildProudCostItems(
             List<ProudSkill.CostItem> costItems,
             Map<Integer, MaterialRepository.MaterialBriefView> materials,
             Map<Integer, String> materialNames) {
-        List<AvatarBaseInfoDTO.CostItem> result = new ArrayList<>();
+        List<AvatarBaseInfoResponse.CostItem> result = new ArrayList<>();
         if (costItems == null) {
             return result;
         }
@@ -481,7 +481,7 @@ public class AvatarServiceImpl implements AvatarService {
             if (item == null || item.getId() == null) {
                 continue;
             }
-            AvatarBaseInfoDTO.CostItem costItem = new AvatarBaseInfoDTO.CostItem();
+            AvatarBaseInfoResponse.CostItem costItem = new AvatarBaseInfoResponse.CostItem();
             costItem.setId(item.getId());
             costItem.setName(materialNames.get(item.getId()));
             costItem.setCount(item.getCount());
@@ -528,7 +528,7 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 装扮列表，角色不存在时为 null
      */
     @Override
-    public AvatarOutfitDTO getAvatarOutfits(Integer id) {
+    public AvatarOutfitResponse getAvatarOutfits(Integer id) {
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         List<AvatarCostume> costumes = avatarCostumeRepository.findByCharacterId(id);
         Map<String, String> texts = textMapChsUtil.getTexts(costumes.stream()
@@ -536,9 +536,9 @@ public class AvatarServiceImpl implements AvatarService {
                         java.util.stream.Stream.of(costume.getNameTextMapHash(), costume.getDescTextMapHash()))
                 .toList());
 
-        List<AvatarOutfitDTO.Outfit> outfits = new ArrayList<>();
+        List<AvatarOutfitResponse.Outfit> outfits = new ArrayList<>();
         for (AvatarCostume costume : costumes) {
-            AvatarOutfitDTO.Outfit outfit = new AvatarOutfitDTO.Outfit();
+            AvatarOutfitResponse.Outfit outfit = new AvatarOutfitResponse.Outfit();
             outfit.setId(costume.getId());
             outfit.setName(texts.get(costume.getNameTextMapHash()));
             outfit.setDesc(texts.get(costume.getDescTextMapHash()));
@@ -557,8 +557,8 @@ public class AvatarServiceImpl implements AvatarService {
         }
 
         outfits.sort(Comparator.comparing(
-                (AvatarOutfitDTO.Outfit outfit) -> outfit.getIndexID() == null ? -1 : outfit.getIndexID()));
-        AvatarOutfitDTO dto = new AvatarOutfitDTO();
+                (AvatarOutfitResponse.Outfit outfit) -> outfit.getIndexID() == null ? -1 : outfit.getIndexID()));
+        AvatarOutfitResponse dto = new AvatarOutfitResponse();
         dto.setId(id);
         dto.setOutfits(outfits);
         return dto;
@@ -571,7 +571,7 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 故事列表，角色不存在时为 null
      */
     @Override
-    public AvatarStoryDTO getAvatarStories(Integer id) {
+    public AvatarStoryResponse getAvatarStories(Integer id) {
         List<FetterStory> stories = fetterStoryRepository.findByAvatarIdOrderByFetterIdAsc(id);
         Set<String> hashes = new LinkedHashSet<>();
         for (FetterStory story : stories) {
@@ -583,16 +583,16 @@ public class AvatarServiceImpl implements AvatarService {
         }
         Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
-        List<AvatarStoryDTO.Story> result = new ArrayList<>();
+        List<AvatarStoryResponse.Story> result = new ArrayList<>();
         for (FetterStory story : stories) {
-            AvatarStoryDTO.Story item = new AvatarStoryDTO.Story();
+            AvatarStoryResponse.Story item = new AvatarStoryResponse.Story();
             item.setTitle(texts.get(story.getStoryTitleTextMapHash()));
             item.setText(texts.get(story.getStoryContextTextMapHash()));
             item.setTips(translateTips(story.getTips(), texts));
             result.add(item);
         }
 
-        AvatarStoryDTO dto = new AvatarStoryDTO();
+        AvatarStoryResponse dto = new AvatarStoryResponse();
         dto.setId(id);
         dto.setStories(result);
         return dto;
@@ -605,7 +605,7 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 语音列表，角色不存在时为 null
      */
     @Override
-    public AvatarVoiceDTO getAvatarVoices(Integer id) {
+    public AvatarVoiceResponse getAvatarVoices(Integer id) {
         List<Fetters> fetters = fettersRepository.findByAvatarIdOrderByTypeAscFetterIdAsc(id);
         Set<String> hashes = new LinkedHashSet<>();
         for (Fetters fetter : fetters) {
@@ -617,21 +617,21 @@ public class AvatarServiceImpl implements AvatarService {
         }
         Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
-        List<AvatarVoiceDTO.Daily> dailies = new ArrayList<>();
-        List<AvatarVoiceDTO.Battle> battles = new ArrayList<>();
+        List<AvatarVoiceResponse.Daily> dailies = new ArrayList<>();
+        List<AvatarVoiceResponse.Battle> battles = new ArrayList<>();
         for (Fetters fetter : fetters) {
             if (fetter.getType() == null) {
                 continue;
             }
             List<String> tips = translateTips(fetter.getTips(), texts);
             if (fetter.getType() == 1) {
-                AvatarVoiceDTO.Daily daily = new AvatarVoiceDTO.Daily();
+                AvatarVoiceResponse.Daily daily = new AvatarVoiceResponse.Daily();
                 daily.setTitle(texts.get(fetter.getVoiceTitleTextMapHash()));
                 daily.setText(texts.get(fetter.getVoiceFileTextTextMapHash()));
                 daily.setTips(tips);
                 dailies.add(daily);
             } else if (fetter.getType() == 2) {
-                AvatarVoiceDTO.Battle battle = new AvatarVoiceDTO.Battle();
+                AvatarVoiceResponse.Battle battle = new AvatarVoiceResponse.Battle();
                 battle.setTitle(texts.get(fetter.getVoiceTitleTextMapHash()));
                 battle.setText(texts.get(fetter.getVoiceFileTextTextMapHash()));
                 battle.setTips(tips);
@@ -639,7 +639,7 @@ public class AvatarServiceImpl implements AvatarService {
             }
         }
 
-        AvatarVoiceDTO dto = new AvatarVoiceDTO();
+        AvatarVoiceResponse dto = new AvatarVoiceResponse();
         dto.setId(id);
         dto.setDailies(dailies);
         dto.setBattles(battles);
@@ -653,13 +653,13 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 命座列表，角色不存在时为 null
      */
     @Override
-    public AvatarConstellationDTO getAvatarConstellations(Integer id) {
+    public AvatarConstellationResponse getAvatarConstellations(Integer id) {
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) {
             return null;
         }
 
-        List<AvatarConstellationDTO.Constellation> constellations = new ArrayList<>();
+        List<AvatarConstellationResponse.Constellation> constellations = new ArrayList<>();
         AvatarSkillDepot depot = avatar.getSkillDepotId() == null
                 ? null
                 : avatarSkillDepotRepository.findById(avatar.getSkillDepotId()).orElse(null);
@@ -680,7 +680,8 @@ public class AvatarServiceImpl implements AvatarService {
                 if (talent == null) {
                     continue;
                 }
-                AvatarConstellationDTO.Constellation constellation = new AvatarConstellationDTO.Constellation();
+                AvatarConstellationResponse.Constellation constellation =
+                        new AvatarConstellationResponse.Constellation();
                 constellation.setId(talent.getId());
                 constellation.setName(texts.get(talent.getNameTextMapHash()));
                 constellation.setDesc(texts.get(talent.getDescTextMapHash()));
@@ -690,7 +691,7 @@ public class AvatarServiceImpl implements AvatarService {
             }
         }
 
-        AvatarConstellationDTO dto = new AvatarConstellationDTO();
+        AvatarConstellationResponse dto = new AvatarConstellationResponse();
         dto.setId(id);
         dto.setConstellations(constellations);
         return dto;
@@ -703,15 +704,15 @@ public class AvatarServiceImpl implements AvatarService {
      * @return 技能数据，角色不存在时为 null
      */
     @Override
-    public AvatarSkillDTO getAvatarSkills(Integer id) {
+    public AvatarSkillResponse getAvatarSkills(Integer id) {
         Avatar avatar = avatarRepository.findById(id).orElse(null);
         if (avatar == null) {
             return null;
         }
 
-        List<AvatarSkillDTO.CombatSkill> combatSkills = new ArrayList<>();
-        List<AvatarSkillDTO.PassiveSkill> passiveSkills = new ArrayList<>();
-        List<AvatarSkillDTO.SpecialProudSkill> specialProudSkills = new ArrayList<>();
+        List<AvatarSkillResponse.CombatSkill> combatSkills = new ArrayList<>();
+        List<AvatarSkillResponse.PassiveSkill> passiveSkills = new ArrayList<>();
+        List<AvatarSkillResponse.SpecialProudSkill> specialProudSkills = new ArrayList<>();
 
         AvatarSkillDepot depot = avatar.getSkillDepotId() == null
                 ? null
@@ -784,7 +785,7 @@ public class AvatarServiceImpl implements AvatarService {
                     continue;
                 }
                 List<ProudSkill> levels = proudByGroup.getOrDefault(skill.getProudSkillGroupId(), List.of());
-                AvatarSkillDTO.CombatSkill combatSkill = new AvatarSkillDTO.CombatSkill();
+                AvatarSkillResponse.CombatSkill combatSkill = new AvatarSkillResponse.CombatSkill();
                 combatSkill.setId(skill.getId());
                 combatSkill.setName(texts.get(skill.getNameTextMapHash()));
                 combatSkill.setDesc(texts.get(skill.getDescTextMapHash()));
@@ -806,7 +807,7 @@ public class AvatarServiceImpl implements AvatarService {
                     if (proudSkill == null || EXCLUDED_PASSIVE_SKILL_IDS.contains(proudSkill.getId())) {
                         continue;
                     }
-                    AvatarSkillDTO.PassiveSkill passiveSkill = new AvatarSkillDTO.PassiveSkill();
+                    AvatarSkillResponse.PassiveSkill passiveSkill = new AvatarSkillResponse.PassiveSkill();
                     passiveSkill.setId(proudSkill.getId());
                     passiveSkill.setName(texts.get(proudSkill.getNameTextMapHash()));
                     passiveSkill.setDesc(texts.get(proudSkill.getDescTextMapHash()));
@@ -827,7 +828,8 @@ public class AvatarServiceImpl implements AvatarService {
                     if (proudSkill == null) {
                         continue;
                     }
-                    AvatarSkillDTO.SpecialProudSkill specialProudSkill = new AvatarSkillDTO.SpecialProudSkill();
+                    AvatarSkillResponse.SpecialProudSkill specialProudSkill =
+                            new AvatarSkillResponse.SpecialProudSkill();
                     specialProudSkill.setId(proudSkill.getId());
                     specialProudSkill.setName(texts.get(proudSkill.getNameTextMapHash()));
                     specialProudSkill.setDesc(texts.get(proudSkill.getDescTextMapHash()));
@@ -840,7 +842,7 @@ public class AvatarServiceImpl implements AvatarService {
             }
         }
 
-        AvatarSkillDTO dto = new AvatarSkillDTO();
+        AvatarSkillResponse dto = new AvatarSkillResponse();
         dto.setId(id);
         dto.setCombatSkills(combatSkills);
         dto.setPassiveSkills(passiveSkills);
@@ -886,11 +888,11 @@ public class AvatarServiceImpl implements AvatarService {
      * @param proudSkills 同一技能组的各等级配置
      * @return 每个等级一行倍率数据
      */
-    private List<AvatarSkillDTO.CombatSkillData> buildCombatSkillDataList(
+    private List<AvatarSkillResponse.CombatSkillData> buildCombatSkillDataList(
             List<ProudSkill> proudSkills, Map<String, String> texts) {
-        List<AvatarSkillDTO.CombatSkillData> result = new ArrayList<>();
+        List<AvatarSkillResponse.CombatSkillData> result = new ArrayList<>();
         for (ProudSkill proudSkill : proudSkills) {
-            AvatarSkillDTO.CombatSkillData data = new AvatarSkillDTO.CombatSkillData();
+            AvatarSkillResponse.CombatSkillData data = new AvatarSkillResponse.CombatSkillData();
             data.setLevel(proudSkill.getLevel());
             data.setParamList(proudSkill.getParamList());
             List<String> paramDescList = new ArrayList<>();

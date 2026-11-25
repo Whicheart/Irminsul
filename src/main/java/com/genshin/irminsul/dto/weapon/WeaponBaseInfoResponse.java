@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 武器详情 */
 @Data
-public class WeaponBaseInfoDTO {
+public class WeaponBaseInfoResponse {
 
     // 武器 ID
     private Integer id;

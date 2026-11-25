@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 角色语音 */
 @Data
-public class AvatarVoiceDTO {
+public class AvatarVoiceResponse {
 
     // 角色 ID
     private Integer id;

@@ -1,9 +1,9 @@
 package com.genshin.irminsul.controller;
 
 import com.genshin.irminsul.common.Result;
-import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoDTO;
-import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankDTO;
-import com.genshin.irminsul.dto.reliquary.ReliquarySetList;
+import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoResponse;
+import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankResponse;
+import com.genshin.irminsul.dto.reliquary.ReliquarySetListResponse;
 import com.genshin.irminsul.service.ReliquaryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class ReliquaryController {
      * @return 套装简要列表
      */
     @GetMapping("/list")
-    public Result<List<ReliquarySetList.RelicSetBrief>> getList(
+    public Result<List<ReliquarySetListResponse.RelicSetBrief>> getList(
             @RequestParam(required = false) String name, @RequestParam(required = false) List<Integer> ranks) {
         return Result.ok(reliquaryService.getReliquaryList(name, ranks));
     }
@@ -45,7 +45,7 @@ public class ReliquaryController {
      * @return 按星级分组的词条档位
      */
     @GetMapping("/prop-rank")
-    public Result<ReliquaryPropRankDTO> getPropRank() {
+    public Result<ReliquaryPropRankResponse> getPropRank() {
         return Result.ok(reliquaryService.getReliquaryPropRank());
     }
 
@@ -56,8 +56,8 @@ public class ReliquaryController {
      * @return 套装详情；不存在时返回 404 错误响应
      */
     @GetMapping("/{id}/base-info")
-    public Result<ReliquaryBaseInfoDTO> getBaseInfo(@PathVariable Integer id) {
-        ReliquaryBaseInfoDTO detail = reliquaryService.getReliquaryBaseInfo(id);
+    public Result<ReliquaryBaseInfoResponse> getBaseInfo(@PathVariable Integer id) {
+        ReliquaryBaseInfoResponse detail = reliquaryService.getReliquaryBaseInfo(id);
         if (detail == null) {
             return Result.error(404, "圣遗物套装不存在");
         }

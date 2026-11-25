@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 角色基础信息 */
 @Data
-public class AvatarBaseInfoDTO {
+public class AvatarBaseInfoResponse {
 
     // 角色 ID
     private Integer id;

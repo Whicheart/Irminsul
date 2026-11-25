@@ -1,8 +1,8 @@
 package com.genshin.irminsul.service.impl;
 
-import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoDTO;
-import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankDTO;
-import com.genshin.irminsul.dto.reliquary.ReliquarySetList;
+import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoResponse;
+import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankResponse;
+import com.genshin.irminsul.dto.reliquary.ReliquarySetListResponse;
 import com.genshin.irminsul.entity.*;
 import com.genshin.irminsul.entity.reliquary.*;
 import com.genshin.irminsul.repository.*;
@@ -55,7 +55,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
      * @return 套装简要列表
      */
     @Override
-    public List<ReliquarySetList.RelicSetBrief> getReliquaryList(String name, List<Integer> ranks) {
+    public List<ReliquarySetListResponse.RelicSetBrief> getReliquaryList(String name, List<Integer> ranks) {
         String nameFilter = name == null ? null : name.trim();
         if (nameFilter != null && nameFilter.isEmpty()) {
             nameFilter = null;
@@ -87,7 +87,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         }
         Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
-        List<ReliquarySetList.RelicSetBrief> result = new ArrayList<>();
+        List<ReliquarySetListResponse.RelicSetBrief> result = new ArrayList<>();
         for (ReliquarySet set : sets) {
             EquipAffix affix = set.getEquipAffixId() == null ? null : affixById.get(set.getEquipAffixId());
             EquipAffix.AffixLevel first = affix == null ? null : firstAffixLevel(affix);
@@ -95,7 +95,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
             if (nameFilter != null && (setName == null || !setName.contains(nameFilter))) {
                 continue;
             }
-            ReliquarySetList.RelicSetBrief brief = new ReliquarySetList.RelicSetBrief();
+            ReliquarySetListResponse.RelicSetBrief brief = new ReliquarySetListResponse.RelicSetBrief();
             brief.setSetId(set.getId());
             brief.setName(setName);
             brief.setMaxRankLevel(set.getMaxRankLevel());
@@ -114,7 +114,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
      * @return 套装详情，不存在时为 null
      */
     @Override
-    public ReliquaryBaseInfoDTO getReliquaryBaseInfo(Integer id) {
+    public ReliquaryBaseInfoResponse getReliquaryBaseInfo(Integer id) {
         ReliquarySet set = reliquarySetRepository.findById(id).orElse(null);
         if (set == null) {
             return null;
@@ -150,7 +150,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         }
         Map<String, String> texts = textMapChsUtil.getTexts(hashes);
 
-        ReliquaryBaseInfoDTO dto = new ReliquaryBaseInfoDTO();
+        ReliquaryBaseInfoResponse dto = new ReliquaryBaseInfoResponse();
         dto.setSetId(set.getId());
         dto.setName(affixLevels.isEmpty() ? null : texts.get(affixLevels.get(0).getNameTextMapHash()));
         dto.setSetAffixNum(set.getSetNeedNum());
@@ -166,11 +166,11 @@ public class ReliquaryServiceImpl implements ReliquaryService {
         }
         dto.setSetAffixDesc(affixDesc);
 
-        List<ReliquaryBaseInfoDTO.Contains> contains = new ArrayList<>();
+        List<ReliquaryBaseInfoResponse.Contains> contains = new ArrayList<>();
         if (set.getContainsList() != null) {
             for (Integer reliquaryId : set.getContainsList()) {
                 Reliquary reliquary = reliquaryById.get(reliquaryId);
-                ReliquaryBaseInfoDTO.Contains item = new ReliquaryBaseInfoDTO.Contains();
+                ReliquaryBaseInfoResponse.Contains item = new ReliquaryBaseInfoResponse.Contains();
                 item.setId(reliquaryId);
                 item.setName(reliquary == null ? null : texts.get(reliquary.getNameTextMapHash()));
                 item.setDesc(reliquary == null ? null : texts.get(reliquary.getDescTextMapHash()));
@@ -189,7 +189,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
      * @return 按星级组织的主属性与副词条数据
      */
     @Override
-    public ReliquaryPropRankDTO getReliquaryPropRank() {
+    public ReliquaryPropRankResponse getReliquaryPropRank() {
         Map<Integer, ReliquaryLevel> levels = reliquaryLevelRepository.findAllById(List.of(1, 2, 3, 4, 5)).stream()
                 .collect(Collectors.toMap(ReliquaryLevel::getId, level -> level, (existing, replacement) -> existing));
         List<ReliquaryAffix> affixes = reliquaryAffixRepository.findAll().stream()
@@ -197,10 +197,10 @@ public class ReliquaryServiceImpl implements ReliquaryService {
                 .sorted(Comparator.comparing(ReliquaryAffix::getId))
                 .toList();
 
-        ReliquaryPropRankDTO dto = new ReliquaryPropRankDTO();
-        List<ReliquaryPropRankDTO.RankLevel> rankLevels = new ArrayList<>();
+        ReliquaryPropRankResponse dto = new ReliquaryPropRankResponse();
+        List<ReliquaryPropRankResponse.RankLevel> rankLevels = new ArrayList<>();
         for (int rankLevel = 1; rankLevel <= 5; rankLevel++) {
-            ReliquaryPropRankDTO.RankLevel item = new ReliquaryPropRankDTO.RankLevel();
+            ReliquaryPropRankResponse.RankLevel item = new ReliquaryPropRankResponse.RankLevel();
             item.setRankLevel(rankLevel);
             item.setMainProps(buildMainProps(levels.get(rankLevel)));
             item.setAppendProps(buildAppendProps(rankLevel, affixes));
@@ -211,7 +211,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
     }
 
     // 主属性：reliquary_level._id = 星级，按等级顺序取 levels[].addProps 的 propType / value
-    private List<ReliquaryPropRankDTO.MainProp> buildMainProps(ReliquaryLevel reliquaryLevel) {
+    private List<ReliquaryPropRankResponse.MainProp> buildMainProps(ReliquaryLevel reliquaryLevel) {
         Map<String, List<Double>> grouped = new LinkedHashMap<>();
         if (reliquaryLevel != null && reliquaryLevel.getLevels() != null) {
             for (ReliquaryLevel.Level level : reliquaryLevel.getLevels()) {
@@ -229,9 +229,9 @@ public class ReliquaryServiceImpl implements ReliquaryService {
                 }
             }
         }
-        List<ReliquaryPropRankDTO.MainProp> mainProps = new ArrayList<>();
+        List<ReliquaryPropRankResponse.MainProp> mainProps = new ArrayList<>();
         grouped.forEach((propType, values) -> {
-            ReliquaryPropRankDTO.MainProp mainProp = new ReliquaryPropRankDTO.MainProp();
+            ReliquaryPropRankResponse.MainProp mainProp = new ReliquaryPropRankResponse.MainProp();
             mainProp.setPropType(propType);
             mainProp.setValues(values);
             mainProps.add(mainProp);
@@ -240,7 +240,7 @@ public class ReliquaryServiceImpl implements ReliquaryService {
     }
 
     // 副词条：reliquary_affix.depotId 左起第一位 = 星级，同 propType 的 propValue 按 _id 顺序汇总
-    private List<ReliquaryPropRankDTO.AppendProp> buildAppendProps(int rankLevel, List<ReliquaryAffix> affixes) {
+    private List<ReliquaryPropRankResponse.AppendProp> buildAppendProps(int rankLevel, List<ReliquaryAffix> affixes) {
         Map<String, List<Double>> grouped = new LinkedHashMap<>();
         for (ReliquaryAffix affix : affixes) {
             if (affix.getDepotId() == null || affix.getPropType() == null || affix.getPropValue() == null) {
@@ -253,9 +253,9 @@ public class ReliquaryServiceImpl implements ReliquaryService {
             grouped.computeIfAbsent(affix.getPropType(), key -> new ArrayList<>())
                     .add(affix.getPropValue());
         }
-        List<ReliquaryPropRankDTO.AppendProp> appendProps = new ArrayList<>();
+        List<ReliquaryPropRankResponse.AppendProp> appendProps = new ArrayList<>();
         grouped.forEach((propType, values) -> {
-            ReliquaryPropRankDTO.AppendProp appendProp = new ReliquaryPropRankDTO.AppendProp();
+            ReliquaryPropRankResponse.AppendProp appendProp = new ReliquaryPropRankResponse.AppendProp();
             appendProp.setPropType(propType);
             appendProp.setValues(values);
             appendProps.add(appendProp);

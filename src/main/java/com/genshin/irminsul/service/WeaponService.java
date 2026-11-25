@@ -1,7 +1,7 @@
 package com.genshin.irminsul.service;
 
-import com.genshin.irminsul.dto.weapon.WeaponBaseInfoDTO;
-import com.genshin.irminsul.dto.weapon.WeaponList;
+import com.genshin.irminsul.dto.weapon.WeaponBaseInfoResponse;
+import com.genshin.irminsul.dto.weapon.WeaponListResponse;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ public interface WeaponService {
      * @param ranks       星级，可选
      * @return 简要武器列表，按图鉴顺序倒序
      */
-    List<WeaponList.WeaponBrief> getWeaponList(String name, List<String> weaponTypes, List<Integer> ranks);
+    List<WeaponListResponse.WeaponBrief> getWeaponList(String name, List<String> weaponTypes, List<Integer> ranks);
 
     /**
      * 查询武器基础信息
@@ -25,5 +25,5 @@ public interface WeaponService {
      * @param id 武器 ID
      * @return 武器详情；不存在时返回 null
      */
-    WeaponBaseInfoDTO getWeaponBaseInfo(Integer id);
+    WeaponBaseInfoResponse getWeaponBaseInfo(Integer id);
 }

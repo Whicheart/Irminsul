@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 敌对生物基础信息 */
 @Data
-public class MonsterBaseInfoDTO {
+public class MonsterBaseInfoResponse {
 
     // 生物 ID
     private Integer id;

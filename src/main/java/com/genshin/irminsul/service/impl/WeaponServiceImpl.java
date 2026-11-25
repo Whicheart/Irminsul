@@ -1,7 +1,7 @@
 package com.genshin.irminsul.service.impl;
 
-import com.genshin.irminsul.dto.weapon.WeaponBaseInfoDTO;
-import com.genshin.irminsul.dto.weapon.WeaponList;
+import com.genshin.irminsul.dto.weapon.WeaponBaseInfoResponse;
+import com.genshin.irminsul.dto.weapon.WeaponListResponse;
 import com.genshin.irminsul.entity.*;
 import com.genshin.irminsul.entity.weapon.Weapon;
 import com.genshin.irminsul.entity.weapon.WeaponCurve;
@@ -67,7 +67,8 @@ public class WeaponServiceImpl implements WeaponService {
      * @return 武器简要列表
      */
     @Override
-    public List<WeaponList.WeaponBrief> getWeaponList(String name, List<String> weaponTypes, List<Integer> ranks) {
+    public List<WeaponListResponse.WeaponBrief> getWeaponList(
+            String name, List<String> weaponTypes, List<Integer> ranks) {
         List<WeaponRepository.WeaponBriefView> weapons = weaponRepository.findAllBrief();
         Map<Integer, Integer> sortOrderByWeaponId = new HashMap<>();
         for (WeaponCodexRepository.WeaponCodexBriefView codex : weaponCodexRepository.findAllBrief()) {
@@ -81,7 +82,7 @@ public class WeaponServiceImpl implements WeaponService {
                 .toList());
 
         String nameFilter = name == null || name.trim().isEmpty() ? null : name.trim();
-        List<WeaponList.WeaponBrief> result = new ArrayList<>();
+        List<WeaponListResponse.WeaponBrief> result = new ArrayList<>();
         for (WeaponRepository.WeaponBriefView weapon : weapons) {
             String weaponName = texts.get(weapon.getNameTextMapHash());
 
@@ -102,7 +103,7 @@ public class WeaponServiceImpl implements WeaponService {
                 continue;
             }
 
-            WeaponList.WeaponBrief brief = new WeaponList.WeaponBrief();
+            WeaponListResponse.WeaponBrief brief = new WeaponListResponse.WeaponBrief();
             brief.setId(weapon.getId());
             brief.setSortId(sortOrderByWeaponId.get(weapon.getId()));
             brief.setName(weaponName);
@@ -114,7 +115,7 @@ public class WeaponServiceImpl implements WeaponService {
         }
 
         result.sort(Comparator.comparing(
-                (WeaponList.WeaponBrief brief) -> brief.getSortId() == null ? 0 : brief.getSortId(),
+                (WeaponListResponse.WeaponBrief brief) -> brief.getSortId() == null ? 0 : brief.getSortId(),
                 Comparator.reverseOrder()));
         return result;
     }
@@ -128,7 +129,7 @@ public class WeaponServiceImpl implements WeaponService {
      * @return 武器详情，不存在时为 null
      */
     @Override
-    public WeaponBaseInfoDTO getWeaponBaseInfo(Integer id) {
+    public WeaponBaseInfoResponse getWeaponBaseInfo(Integer id) {
         Weapon weapon = weaponRepository.findById(id).orElse(null);
         if (weapon == null) {
             return null;
@@ -229,7 +230,7 @@ public class WeaponServiceImpl implements WeaponService {
         materials.forEach(
                 (materialId, material) -> materialNames.put(materialId, texts.get(material.getNameTextMapHash())));
 
-        WeaponBaseInfoDTO dto = new WeaponBaseInfoDTO();
+        WeaponBaseInfoResponse dto = new WeaponBaseInfoResponse();
         dto.setId(weapon.getId());
         dto.setName(texts.get(weapon.getNameTextMapHash()));
         dto.setDesc(texts.get(weapon.getDescTextMapHash()));
@@ -259,24 +260,24 @@ public class WeaponServiceImpl implements WeaponService {
         dto.setSubStatName(subProp == null ? null : translateStat(subProp.getPropType()));
         dto.setSubStatValue(subStatValue);
 
-        List<WeaponBaseInfoDTO.Material> materialList = new ArrayList<>();
+        List<WeaponBaseInfoResponse.Material> materialList = new ArrayList<>();
         if (promoteLevels != null) {
             for (WeaponPromote.Level level : promoteLevels) {
                 Integer promoteLevel = level.getPromoteLevel();
                 if (promoteLevel == null || promoteLevel < 1) {
                     continue;
                 }
-                WeaponBaseInfoDTO.Material material = new WeaponBaseInfoDTO.Material();
+                WeaponBaseInfoResponse.Material material = new WeaponBaseInfoResponse.Material();
                 material.setPromoteLevel(promoteLevel);
                 material.setMaxLevel(level.getUnlockMaxLevel());
                 material.setMora(level.getCoinCost());
-                List<WeaponBaseInfoDTO.CostItem> costItems = new ArrayList<>();
+                List<WeaponBaseInfoResponse.CostItem> costItems = new ArrayList<>();
                 if (level.getCostItems() != null) {
                     for (WeaponPromote.CostItem item : level.getCostItems()) {
                         if (item == null || item.getId() == null) {
                             continue;
                         }
-                        WeaponBaseInfoDTO.CostItem costItem = new WeaponBaseInfoDTO.CostItem();
+                        WeaponBaseInfoResponse.CostItem costItem = new WeaponBaseInfoResponse.CostItem();
                         costItem.setId(item.getId());
                         costItem.setName(materialNames.get(item.getId()));
                         costItem.setCount(item.getCount());

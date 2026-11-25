@@ -1,7 +1,7 @@
 package com.genshin.irminsul.service.impl;
 
-import com.genshin.irminsul.dto.monster.MonsterBaseInfoDTO;
-import com.genshin.irminsul.dto.monster.MonsterList;
+import com.genshin.irminsul.dto.monster.MonsterBaseInfoResponse;
+import com.genshin.irminsul.dto.monster.MonsterListResponse;
 import com.genshin.irminsul.entity.AnimalCodex;
 import com.genshin.irminsul.entity.monster.Monster;
 import com.genshin.irminsul.entity.monster.MonsterCurve;
@@ -82,7 +82,7 @@ public class MonsterServiceImpl implements MonsterService {
      * @return 敌对生物简要列表
      */
     @Override
-    public List<MonsterList.MonsterBrief> getMonsterList(String name, List<String> types) {
+    public List<MonsterListResponse.MonsterBrief> getMonsterList(String name, List<String> types) {
         // 以图鉴条目为数据源，按 sortOrder 升序排列
         List<AnimalCodex> codexes = animalCodexRepository.findAll().stream()
                 .filter(codex -> CODEX_TYPE_MONSTER.equals(codex.getType()))
@@ -120,7 +120,7 @@ public class MonsterServiceImpl implements MonsterService {
                         .filter(value -> !value.isEmpty())
                         .collect(Collectors.toSet());
 
-        List<MonsterList.MonsterBrief> result = new ArrayList<>();
+        List<MonsterListResponse.MonsterBrief> result = new ArrayList<>();
         for (AnimalCodex codex : codexes) {
             MonsterDescribe describe = describeMap.get(codex.getDescribeId());
             String monsterName = describe == null ? null : names.get(describe.getNameTextMapHash());
@@ -135,7 +135,7 @@ public class MonsterServiceImpl implements MonsterService {
                 continue;
             }
 
-            MonsterList.MonsterBrief brief = new MonsterList.MonsterBrief();
+            MonsterListResponse.MonsterBrief brief = new MonsterListResponse.MonsterBrief();
             brief.setId(codex.getId());
             brief.setName(monsterName);
             brief.setType(codexType);
@@ -154,9 +154,9 @@ public class MonsterServiceImpl implements MonsterService {
      * @return 详情，不存在时为 null
      */
     @Override
-    public MonsterBaseInfoDTO getMonsterBaseInfo(Integer id) {
+    public MonsterBaseInfoResponse getMonsterBaseInfo(Integer id) {
 
-        MonsterBaseInfoDTO dto = new MonsterBaseInfoDTO();
+        MonsterBaseInfoResponse dto = new MonsterBaseInfoResponse();
         dto.setId(id);
 
         // 22110401、23080101、29091001、29091101 在 monster 表中不存在。处理方式：个人倾向于直接返回 null

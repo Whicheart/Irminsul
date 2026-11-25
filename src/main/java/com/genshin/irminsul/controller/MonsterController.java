@@ -1,8 +1,8 @@
 package com.genshin.irminsul.controller;
 
 import com.genshin.irminsul.common.Result;
-import com.genshin.irminsul.dto.monster.MonsterBaseInfoDTO;
-import com.genshin.irminsul.dto.monster.MonsterList;
+import com.genshin.irminsul.dto.monster.MonsterBaseInfoResponse;
+import com.genshin.irminsul.dto.monster.MonsterListResponse;
 import com.genshin.irminsul.service.MonsterService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class MonsterController {
      * @return 简要生物列表
      */
     @GetMapping("/list")
-    public Result<List<MonsterList.MonsterBrief>> getList(
+    public Result<List<MonsterListResponse.MonsterBrief>> getList(
             @RequestParam(required = false) String name, @RequestParam(required = false) List<String> types) {
         return Result.ok(monsterService.getMonsterList(name, types));
     }
@@ -41,8 +41,8 @@ public class MonsterController {
      * @return 生物详情；不存在时返回 404 错误响应
      */
     @GetMapping("/{id}/base-info")
-    public Result<MonsterBaseInfoDTO> getBaseInfo(@PathVariable Integer id) {
-        MonsterBaseInfoDTO detail = monsterService.getMonsterBaseInfo(id);
+    public Result<MonsterBaseInfoResponse> getBaseInfo(@PathVariable Integer id) {
+        MonsterBaseInfoResponse detail = monsterService.getMonsterBaseInfo(id);
         if (detail == null) {
             return Result.error(404, "敌对生物不存在");
         }

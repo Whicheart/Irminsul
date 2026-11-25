@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 圣遗物套装列表响应 */
 @Data
-public class ReliquarySetList {
+public class ReliquarySetListResponse {
 
     // 简要套装列表
     private List<RelicSetBrief> relicSets;

@@ -1,7 +1,7 @@
 package com.genshin.irminsul.service;
 
-import com.genshin.irminsul.dto.monster.MonsterBaseInfoDTO;
-import com.genshin.irminsul.dto.monster.MonsterList;
+import com.genshin.irminsul.dto.monster.MonsterBaseInfoResponse;
+import com.genshin.irminsul.dto.monster.MonsterListResponse;
 import java.util.List;
 
 /**
@@ -15,7 +15,7 @@ public interface MonsterService {
      * @param types 图鉴子类型，可选；为空返回全部
      * @return 简要生物列表
      */
-    List<MonsterList.MonsterBrief> getMonsterList(String name, List<String> types);
+    List<MonsterListResponse.MonsterBrief> getMonsterList(String name, List<String> types);
 
     /**
      * 查询敌对生物基础信息
@@ -23,5 +23,5 @@ public interface MonsterService {
      * @param id 生物 ID
      * @return 生物详情；不存在时返回 null
      */
-    MonsterBaseInfoDTO getMonsterBaseInfo(Integer id);
+    MonsterBaseInfoResponse getMonsterBaseInfo(Integer id);
 }

@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 各星级圣遗物的主副词条档位 */
 @Data
-public class ReliquaryPropRankDTO {
+public class ReliquaryPropRankResponse {
 
     // 按星级分组
     private List<RankLevel> rankLevels;

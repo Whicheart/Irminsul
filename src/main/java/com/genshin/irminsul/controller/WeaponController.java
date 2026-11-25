@@ -1,8 +1,8 @@
 package com.genshin.irminsul.controller;
 
 import com.genshin.irminsul.common.Result;
-import com.genshin.irminsul.dto.weapon.WeaponBaseInfoDTO;
-import com.genshin.irminsul.dto.weapon.WeaponList;
+import com.genshin.irminsul.dto.weapon.WeaponBaseInfoResponse;
+import com.genshin.irminsul.dto.weapon.WeaponListResponse;
 import com.genshin.irminsul.service.WeaponService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class WeaponController {
      * @return 简要武器列表
      */
     @GetMapping("/list")
-    public Result<List<WeaponList.WeaponBrief>> getList(
+    public Result<List<WeaponListResponse.WeaponBrief>> getList(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) List<String> weaponTypes,
             @RequestParam(required = false) List<Integer> ranks) {
@@ -44,8 +44,8 @@ public class WeaponController {
      * @return 武器详情；不存在时返回 404 错误响应
      */
     @GetMapping("/{id}/base-info")
-    public Result<WeaponBaseInfoDTO> getBaseInfo(@PathVariable Integer id) {
-        WeaponBaseInfoDTO detail = weaponService.getWeaponBaseInfo(id);
+    public Result<WeaponBaseInfoResponse> getBaseInfo(@PathVariable Integer id) {
+        WeaponBaseInfoResponse detail = weaponService.getWeaponBaseInfo(id);
         if (detail == null) {
             return Result.error(404, "武器不存在");
         }

@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 角色列表响应 */
 @Data
-public class AvatarList {
+public class AvatarListResponse {
 
     // 简要角色列表
     private List<AvatarBrief> avatars;

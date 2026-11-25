@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 圣遗物套装详情 */
 @Data
-public class ReliquaryBaseInfoDTO {
+public class ReliquaryBaseInfoResponse {
 
     // 套装 ID
     private Integer setId;

@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 角色装扮数据 */
 @Data
-public class AvatarOutfitDTO {
+public class AvatarOutfitResponse {
 
     // 角色 ID
     private Integer id;

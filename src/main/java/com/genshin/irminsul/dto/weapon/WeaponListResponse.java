@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 武器列表响应 */
 @Data
-public class WeaponList {
+public class WeaponListResponse {
 
     // 简要武器列表
     private List<WeaponBrief> weapons;

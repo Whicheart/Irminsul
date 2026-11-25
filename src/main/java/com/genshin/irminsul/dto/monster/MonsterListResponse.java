@@ -5,7 +5,7 @@ import lombok.Data;
 
 /** 敌对生物列表响应 */
 @Data
-public class MonsterList {
+public class MonsterListResponse {
 
     // 简要生物列表
     private List<MonsterBrief> monsters;

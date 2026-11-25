@@ -1,8 +1,8 @@
 package com.genshin.irminsul.service;
 
-import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoDTO;
-import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankDTO;
-import com.genshin.irminsul.dto.reliquary.ReliquarySetList;
+import com.genshin.irminsul.dto.reliquary.ReliquaryBaseInfoResponse;
+import com.genshin.irminsul.dto.reliquary.ReliquaryPropRankResponse;
+import com.genshin.irminsul.dto.reliquary.ReliquarySetListResponse;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ public interface ReliquaryService {
      * @param ranks 星级筛选，可选
      * @return 套装简要列表
      */
-    List<ReliquarySetList.RelicSetBrief> getReliquaryList(String name, List<Integer> ranks);
+    List<ReliquarySetListResponse.RelicSetBrief> getReliquaryList(String name, List<Integer> ranks);
 
     /**
      * 查询圣遗物套装详情
@@ -25,12 +25,12 @@ public interface ReliquaryService {
      * @param id 套装 ID
      * @return 套装详情；不存在时返回 null
      */
-    ReliquaryBaseInfoDTO getReliquaryBaseInfo(Integer id);
+    ReliquaryBaseInfoResponse getReliquaryBaseInfo(Integer id);
 
     /**
      * 查询各星级圣遗物的主副词条档位
      *
      * @return 按星级分组的词条档位
      */
-    ReliquaryPropRankDTO getReliquaryPropRank();
+    ReliquaryPropRankResponse getReliquaryPropRank();
 }
